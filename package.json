@@ -1,0 +1,46 @@
+{
+  "name": "sas-kairos",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
+    "icons": "node scripts/generate-icons.mjs",
+    "pwa:check": "node scripts/pwa-check.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^7.0.9",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "idb": "^8.0.4",
+    "lucide-react": "^1.79.0",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.92.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.7.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.6.0",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "fake-indexeddb": "^6.2.8",
+    "playwright-core": "^1.65.1",
+    "sharp": "^0.35.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5",
+    "vitest": "^5.1.1"
+  }
+}

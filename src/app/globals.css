@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/*
+ * KAIRÓS — Paleta Mineral (oficial)
+ *   Marfim de Cera  #F7F4EF   Linho Claro   #E5DED4
+ *   Areia de Pedra  #D3C7B8   Cinza Areia   #BCB6AF
+ *   Cinza Mineral   #A5A5A5
+ *
+ * "Tinta" e "Tinta suave" NÃO fazem parte da paleta oficial: são tons escuros
+ * derivados dela, usados apenas em textos para atingir contraste WCAG AA
+ * (o Cinza Mineral sobre o Marfim tem contraste ~2,3:1).
+ */
+:root {
+  --kairos-marfim: #f7f4ef;
+  --kairos-linho: #e5ded4;
+  --kairos-areia: #d3c7b8;
+  --kairos-cinza-areia: #bcb6af;
+  --kairos-cinza-mineral: #a5a5a5;
+  --kairos-tinta: #34302c;
+  --kairos-tinta-suave: #6b645d;
+
+  --background: var(--kairos-marfim);
+  --foreground: var(--kairos-tinta);
+  --surface: #fffdfa;
+  --muted: var(--kairos-linho);
+  --muted-foreground: var(--kairos-tinta-suave);
+  --border: var(--kairos-linho);
+  --accent: var(--kairos-areia);
+  --primary: var(--kairos-tinta);
+  --primary-foreground: var(--kairos-marfim);
+  --ring: var(--kairos-cinza-areia);
+  --danger: #9b3b31;
+  --success: #4f6b4a;
+  --warning: #8a6a2f;
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --color-marfim: var(--kairos-marfim);
+  --color-linho: var(--kairos-linho);
+  --color-areia: var(--kairos-areia);
+  --color-cinza-areia: var(--kairos-cinza-areia);
+  --color-cinza-mineral: var(--kairos-cinza-mineral);
+  --color-tinta: var(--kairos-tinta);
+
+  --font-sans: var(--font-text);
+  --font-display: var(--font-display-serif);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-text), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--kairos-tinta-suave);
+    outline-offset: 2px;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+@utility pt-safe {
+  padding-top: var(--safe-top);
+}
+@utility tracking-brand {
+  letter-spacing: 0.32em;
+}

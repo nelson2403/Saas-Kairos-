@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- PROVISÓRIO: substituir pela logo oficial da Kairós (ver docs/BRAND.md) -->
+  <rect width="512" height="512" fill="#F7F4EF"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="#D3C7B8" stroke-width="6"/>
+  <text x="256" y="256" text-anchor="middle" dominant-baseline="central"
+        font-family="Georgia, 'Times New Roman', serif" font-size="210" fill="#34302C">K</text>
+</svg>
