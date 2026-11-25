@@ -49,6 +49,7 @@ export type RawMaterial = {
   density: string | null;
   min_stock: string;
   last_cost: string | null;
+  preferred_supplier_id: string | null;
   notes: string | null;
   status: "active" | "inactive" | "archived";
   updated_at: string;

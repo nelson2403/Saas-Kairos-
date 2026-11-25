@@ -52,6 +52,10 @@ export function MovementTable({ rows, canReverse, showItem = true }: { rows: Row
                     <Link href={`/admin/producao/${m.source_id}`} className="hover:underline">
                       <Badge>Produção</Badge>
                     </Link>
+                  ) : m.source_type === "purchase_receipt" && m.source_id ? (
+                    <Link href={`/admin/compras/recebimento/${m.source_id}`} className="hover:underline">
+                      <Badge>Compra</Badge>
+                    </Link>
                   ) : (
                     m.source_type && <Badge>{SOURCE_LABEL[m.source_type] ?? m.source_type}</Badge>
                   )}

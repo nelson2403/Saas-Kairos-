@@ -8,6 +8,7 @@ import { PLANNED_MODULES } from "@/config/modules";
 import { requireMembership } from "@/lib/auth/dal";
 import { countBelowMin } from "@/modules/inventory/service";
 import { countOpenOrders } from "@/modules/production/service";
+import { countPendingPurchases } from "@/modules/purchasing/service";
 
 export default function DashboardPage() {
   return (
@@ -23,6 +24,7 @@ export default function DashboardPage() {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <StockIndicator />
               <ProductionIndicator />
+              <PurchaseIndicator />
             </div>
           </Suspense>
           <CardDescription className="mt-4">
@@ -85,6 +87,19 @@ async function ProductionIndicator() {
         <span className="font-display text-3xl tabular-nums">{open}</span>
       </span>
       <Badge tone={open > 0 ? "warning" : "neutral"}>{open > 0 ? "Concluir" : "Nenhuma"}</Badge>
+    </Link>
+  );
+}
+
+async function PurchaseIndicator() {
+  const pending = await countPendingPurchases();
+  return (
+    <Link href="/admin/compras" className="flex items-center justify-between rounded-md border border-border p-4 hover:bg-muted/50">
+      <span>
+        <span className="block text-sm text-muted-foreground">Compras aguardando recebimento</span>
+        <span className="font-display text-3xl tabular-nums">{pending}</span>
+      </span>
+      <Badge tone={pending > 0 ? "warning" : "neutral"}>{pending > 0 ? "Conferir" : "Nenhuma"}</Badge>
     </Link>
   );
 }

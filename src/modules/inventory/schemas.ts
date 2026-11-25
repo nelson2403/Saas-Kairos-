@@ -62,6 +62,7 @@ export const rawMaterialSchema = z.object({
   unit_id: uuid,
   density: optionalDecimal("Densidade").refine((v) => v === null || v > 0, "Densidade deve ser maior que zero."),
   min_stock: optionalDecimal("Estoque mínimo").transform((v) => v ?? 0),
+  preferred_supplier_id: optionalUuid,
   notes: optionalText(2000),
   status,
 });

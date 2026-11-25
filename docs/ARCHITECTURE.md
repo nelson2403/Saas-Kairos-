@@ -173,6 +173,7 @@ Convenções obrigatórias:
 
 **Compras** (Fase 4)
 - `suppliers`, `purchase_orders` → `purchase_items`. Só `fn_receive_purchase` gera entrada de estoque.
+- Implementado na Fase 4: `suppliers`, `raw_materials.preferred_supplier_id`, `purchase_orders` (`number`, status `draft/ordered/partial/received/closed/canceled`) → `purchase_order_items` (unidade e preço de compra, `received_quantity`), `purchase_receipts` → `purchase_receipt_items` (`movement_id`). Funções `fn_save_purchase_order`, `fn_set_purchase_order_status`, `fn_receive_purchase`, `fn_reverse_purchase_receipt`. Clientes: `customers`, `customer_consents` (imutável), `fn_anonymize_customer`, `fn_log_customer_export`, auditoria mascarada (`private.audit_row_masked`).
 
 **Comercial** (Fases 4–6)
 - `customers` (consentimentos LGPD: `marketing_opt_in`, `whatsapp_opt_in`, datas).

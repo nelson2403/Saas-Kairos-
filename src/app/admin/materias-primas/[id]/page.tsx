@@ -19,6 +19,7 @@ import {
   listUnits,
 } from "@/modules/inventory/service";
 import { countRecipesUsing } from "@/modules/production/service";
+import { listSupplierOptions } from "@/modules/partners/service";
 import { RawMaterialForm } from "../raw-material-form";
 
 export const metadata: Metadata = { title: "Matéria-prima" };
@@ -35,12 +36,13 @@ async function Detail({ params, searchParams }: PageProps<"/admin/materias-prima
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const { role } = await requireMembership();
-  const [material, units, balance, movements, inRecipes] = await Promise.all([
+  const [material, units, balance, movements, inRecipes, suppliers] = await Promise.all([
     getRawMaterial(id),
     listUnits(),
     getItemBalance("raw_material", id),
     listMovements({ itemType: "raw_material", itemId: id }),
     countRecipesUsing(id),
+    listSupplierOptions(),
   ]);
   if (!material) notFound();
 
@@ -61,7 +63,7 @@ async function Detail({ params, searchParams }: PageProps<"/admin/materias-prima
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardTitle className="mb-4">Cadastro</CardTitle>
-          <RawMaterialForm material={material} units={units} canEdit={canManageCatalog(role)} unitLocked={movements.total > 0 || inRecipes > 0} />
+          <RawMaterialForm material={material} units={units} canEdit={canManageCatalog(role)} unitLocked={movements.total > 0 || inRecipes > 0} suppliers={suppliers} />
         </Card>
         <StockSummary
           balance={balance}

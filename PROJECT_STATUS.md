@@ -3,7 +3,7 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 26/11/2026
+Última atualização: 27/11/2026
 
 ## Resumo
 
@@ -12,8 +12,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 0 — Auditoria e planejamento | Concluído | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
-| 3 — Produção | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 26/11; falta o roteiro de validação |
-| 4 — Clientes, fornecedores e compras | Não iniciado | |
+| 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
+| 4 — Clientes, fornecedores e compras | **Testado** (aguardando validação) | Falta aplicar `20261127000100_partners_purchases.sql` e validar no Preview do branch `fase-4-compras` |
 | 5 — Vendas e financeiro | Não iniciado | |
 | 6 — Loja virtual | Não iniciado | |
 | 7 — Personalização da loja | Não iniciado | |
@@ -30,6 +30,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
 | ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
 | ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
+| Aplicar `20261127000100_partners_purchases.sql` no SQL Editor | Fase 4 no ambiente publicado | dev |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
@@ -126,6 +127,36 @@ Resultado: **107 testes passando** (`npm test`), lint, typecheck e build sem err
 6. Abrir outra ordem maior que o estoque de um insumo e tentar concluir: deve recusar sem baixar nada.
 7. Estornar a ordem concluída e conferir que os saldos voltaram.
 
+## Fase 4 — Clientes, fornecedores e compras
+
+Critério: *compras recebidas geram entrada de estoque.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Clientes: cadastro (CPF/CNPJ opcional e único, contatos, endereço, nascimento), busca, CPF mascarado nas listas | Testado | `supabase/migrations/20261127000100_partners_purchases.sql`, `src/app/admin/clientes/*` | permissão por papel, CPF único, isolamento entre empresas | histórico de compras do cliente (Fase 5) |
+| Consentimentos LGPD (WhatsApp e marketing) com data carimbada pelo banco e histórico imutável (quem, quando, origem) | Testado | triggers `customer_before_write` e `customer_log_consent` | concessão/revogação, data não forjável, histórico imutável | — |
+| Auditoria sem dados pessoais em claro (campos pessoais mascarados) | Testado | `private.audit_row_masked` | nenhum CPF/e-mail/telefone/nome no log | — |
+| Exportação dos dados do titular (JSON, registrada na auditoria) e anonimização irreversível (proprietário/admin, motivo + confirmação) | Testado | `fn_log_customer_export`, `fn_anonymize_customer`, `/admin/clientes/[id]/exportar` | anonimização (papel, dados removidos, edição bloqueada, consentimentos revogados) | — |
+| Fornecedores: cadastro, fornecedor preferencial da matéria-prima, pedidos por fornecedor | Testado | `src/app/admin/fornecedores/*`, cadastro de matéria-prima | papel, FK entre empresas | — |
+| Pedido de compra: numeração PC-0001, itens (matéria-prima ou produto de revenda) em unidade de compra (ex.: kg com estoque em g), total | Testado | `fn_save_purchase_order`, `src/app/admin/compras/*` | numeração, total, unidade incompatível, papel | — |
+| Situação: rascunho → enviado → recebido em parte → recebido; cancelar (sem recebimento); encerrar saldo pendente | Testado | `fn_set_purchase_order_status` | 2 testes | — |
+| Recebimento (conferência): parcial ou total, preço real, NF; entrada "Compra" no estoque com custo convertido, custo médio e último custo | Testado | `fn_receive_purchase` | 3 testes + **2 testes de concorrência em PostgreSQL 17** (nunca recebe acima do pedido, reenvio aplica uma vez) | recebimento offline (não previsto) |
+| Estorno de recebimento (gerente+, uma vez, sem saldo negativo) | Testado | `fn_reverse_purchase_receipt` | 2 testes | — |
+| Integração: movimentações ligadas ao pedido, compras aguardando recebimento no Dashboard | Implementado | `movement-table.tsx`, `src/app/admin/page.tsx` | build | validação visual |
+
+Resultado: **134 testes passando** (`npm test`), lint, typecheck e build sem erros.
+
+### Como validar a Fase 4
+
+1. No Supabase → SQL Editor, executar `20261127000100_partners_purchases.sql`.
+2. Abrir o Preview do branch `fase-4-compras` na Vercel.
+3. Clientes: cadastrar um cliente com WhatsApp autorizado; desmarcar depois e conferir o histórico de consentimentos. Exportar os dados (JSON).
+4. Fornecedores: cadastrar um fornecedor e defini-lo como preferencial de uma matéria-prima.
+5. Compras: criar um pedido com uma matéria-prima em **kg** (estoque em g) e preço por kg; marcar como enviado.
+6. Receber só parte; conferir em Estoque o saldo em gramas e o custo por grama; receber o restante com outro preço e conferir o custo médio.
+7. Estornar um recebimento e conferir o saldo.
+8. (Opcional, irreversível) Anonimizar um cliente de teste.
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -143,4 +174,8 @@ Resultado: **107 testes passando** (`npm test`), lint, typecheck e build sem err
 - **Custo da produção** = Σ consumo real × custo médio do insumo no momento (sem custo médio, último custo). Se algum insumo não tem custo, a ordem fica com custo "incompleto" e não altera o custo médio nem o custo cadastrado do produto.
 - **Conclusão tudo ou nada**: insumos travados em ordem fixa (id) para não haver deadlock entre ordens simultâneas.
 - **Estorno de produção** devolve os insumos sem alterar o custo médio deles e não restaura o "custo" cadastrado do produto (fica o da última produção).
+- **Cliente não é excluído, é anonimizado** (mantém o histórico de vendas sem dados pessoais). Consentimento sempre opt-in, com data carimbada pelo banco.
+- **Auditoria mascara dados pessoais** de clientes e fornecedores (registra só que o campo mudou).
+- **Pedido de compra só é editado antes do primeiro recebimento**; depois, corrige-se estornando o recebimento ou encerrando o saldo.
+- **Recebimento usa o preço informado na chegada** como custo de entrada (pode diferir do pedido). Frete/rateio e contas a pagar ficam para o financeiro (Fase 5).
 - **Abrir ordem exige conexão** (numeração e ficha vigente vêm do servidor); **concluir** pode ser feito offline e é validado no servidor ao sincronizar.

@@ -16,11 +16,13 @@ export function RawMaterialForm({
   units,
   canEdit,
   unitLocked,
+  suppliers,
 }: {
   material: RawMaterial | null;
   units: Unit[];
   canEdit: boolean;
   unitLocked: boolean;
+  suppliers: { id: string; name: string; trade_name: string | null; status: string }[];
 }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(
     saveRawMaterialAction.bind(null, material?.id ?? null),
@@ -70,6 +72,18 @@ export function RawMaterialForm({
 
         <Field label="Estoque mínimo" htmlFor="min_stock" error={errors.min_stock} hint="Na unidade de estoque. Abaixo disto aparece nos alertas.">
           <Input id="min_stock" name="min_stock" inputMode="decimal" defaultValue={toInput(material?.min_stock)} placeholder="0" />
+        </Field>
+        <Field label="Fornecedor preferencial" htmlFor="preferred_supplier_id" error={errors.preferred_supplier_id}>
+          <Select id="preferred_supplier_id" name="preferred_supplier_id" defaultValue={material?.preferred_supplier_id ?? ""}>
+            <option value="">Nenhum</option>
+            {suppliers
+              .filter((s) => s.status === "active" || s.id === material?.preferred_supplier_id)
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.trade_name || s.name}
+                </option>
+              ))}
+          </Select>
         </Field>
         <Field label="Situação" htmlFor="status" error={errors.status}>
           <Select id="status" name="status" defaultValue={material?.status ?? "active"}>
