@@ -16,7 +16,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
 | 5 — Vendas e financeiro | **Concluído** (aceito em 29/11/2026) | Publicado em produção |
 | 6 — Loja virtual | **Concluído** (aceito em 30/11/2026) | Publicado em produção. Pendente: revisão da política de privacidade pela proprietária |
-| 7 — Personalização da loja | **Testado** (aguardando validação) | Falta aplicar `20261130000100_storefront_editor.sql` e validar no Preview do branch `fase-7-personalizar` |
+| 7 — Personalização da loja | **Testado** (publicado em produção; aguardando validação) | Migration aplicada em 30/11. Validar em produção pelo roteiro "Como validar a Fase 7" |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
 | 9 — WhatsApp / Evolution API | Não iniciado | Depende de servidor Evolution API |
 | 10 — PWA avançada e finalização | Não iniciado | |
@@ -33,7 +33,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
 | ~~Migration da Fase 5~~ | — | aplicada em 28/11 |
 | ~~Migration da Fase 6~~ | — | aplicada em 29/11 |
-| Aplicar `20261130000100_storefront_editor.sql` no SQL Editor | Fase 7 no ambiente publicado | dev |
+| ~~Migration da Fase 7~~ | — | aplicada em 30/11 |
 | Variável `CRON_SECRET` na Vercel (e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL` = endereço público) | Expiração diária de reservas; checkout; sitemap/SEO | dev |
 | Revisão da Política de Privacidade (`/privacidade`) pela proprietária | Publicação da loja | Kairós |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
