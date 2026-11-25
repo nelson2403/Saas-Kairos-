@@ -12,7 +12,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 0 — Auditoria e planejamento | Concluído | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
-| 3 — Produção | **Testado** (aguardando validação) | Falta aplicar `20261126000100_production.sql` no Supabase e validar no ambiente publicado |
+| 3 — Produção | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 26/11; falta o roteiro de validação |
 | 4 — Clientes, fornecedores e compras | Não iniciado | |
 | 5 — Vendas e financeiro | Não iniciado | |
 | 6 — Loja virtual | Não iniciado | |
@@ -29,7 +29,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Projeto Supabase + migration da fundação~~ | — | feito em 24/11 |
 | ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
 | ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
-| Aplicar `20261126000100_production.sql` no SQL Editor | Fase 3 no ambiente publicado | dev |
+| ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
