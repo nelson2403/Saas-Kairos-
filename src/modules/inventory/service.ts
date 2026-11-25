@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireMembership, requireRole, type RoleKey } from "@/lib/auth/dal";
 import { dbErrorMessage, isConflict, toFieldErrors, type ActionResult } from "@/lib/action-result";
 import { slugify, type ItemType, type Unit } from "./domain";
+import { PRODUCT_IMAGES_BUCKET, productImageFolder, productImageUrl, type ProductImage } from "./images";
 import {
   categorySchema,
   movementSchema,
@@ -199,14 +200,18 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 // ---------------------------------------------------------------------------
 // Produtos
 // ---------------------------------------------------------------------------
-export type ProductListItem = Product & { category: { name: string } | null; unit: { code: string } };
+export type ProductListItem = Product & {
+  category: { name: string } | null;
+  unit: { code: string };
+  images: { storage_path: string; sort_order: number }[];
+};
 
 export async function listProducts(filters: { q?: string; status?: string; category?: string }) {
   await requireMembership();
   const supabase = await createClient();
   let query = supabase
     .from("products")
-    .select("*, category:product_categories(name), unit:measurement_units(code)")
+    .select("*, category:product_categories(name), unit:measurement_units(code), images:product_images(storage_path, sort_order)")
     .order("name")
     .limit(500);
   if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
@@ -557,4 +562,73 @@ export async function cancelInventoryCount(id: string): Promise<ActionResult> {
   const { error } = await supabase.rpc("fn_cancel_inventory_count", { p_count_id: id });
   if (error) return { ok: false, error: dbErrorMessage(error) };
   return { ok: true, message: "Inventário cancelado." };
+}
+
+// ---------------------------------------------------------------------------
+// Fotos de produtos (arquivo enviado pelo navegador direto ao Storage, com RLS;
+// aqui só se registra/remove o vínculo)
+// ---------------------------------------------------------------------------
+export async function listProductImages(productId: string): Promise<ProductImage[]> {
+  await requireMembership();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("product_images")
+    .select("id, storage_path, alt, sort_order")
+    .eq("product_id", productId)
+    .order("sort_order")
+    .order("created_at");
+  return (data ?? []).map((i) => ({ ...(i as Omit<ProductImage, "url">), url: productImageUrl(i.storage_path as string) }));
+}
+
+export async function addProductImage(productId: string, storagePath: string): Promise<ActionResult> {
+  const { companyId, user } = await requireRole(CATALOG_ROLES);
+  const folder = productImageFolder(companyId, productId);
+  if (!storagePath.startsWith(folder) || storagePath.slice(folder.length).includes("/")) {
+    return { ok: false, error: "Caminho de imagem inválido." };
+  }
+  const supabase = await createClient();
+  const { data: last } = await supabase
+    .from("product_images")
+    .select("sort_order")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const { error } = await supabase.from("product_images").insert({
+    company_id: companyId,
+    product_id: productId,
+    storage_path: storagePath,
+    sort_order: (last?.sort_order ?? -1) + 1,
+    created_by: user.id,
+  });
+  if (error) {
+    // Sem registro, o arquivo não serve para nada: remove.
+    await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([storagePath]);
+    return { ok: false, error: dbErrorMessage(error, "Não foi possível salvar a foto.") };
+  }
+  return { ok: true };
+}
+
+export async function removeProductImage(imageId: string): Promise<ActionResult> {
+  await requireRole(CATALOG_ROLES);
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("product_images").delete().eq("id", imageId).select("storage_path").maybeSingle();
+  if (error || !data) return { ok: false, error: dbErrorMessage(error, "Não foi possível remover a foto.") };
+  await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([data.storage_path as string]);
+  return { ok: true, message: "Foto removida." };
+}
+
+/** Coloca a foto em primeiro lugar (principal), mantendo a ordem das demais. */
+export async function setMainProductImage(productId: string, imageId: string): Promise<ActionResult> {
+  await requireRole(CATALOG_ROLES);
+  const supabase = await createClient();
+  const { data } = await supabase.from("product_images").select("id").eq("product_id", productId).order("sort_order").order("created_at");
+  const ids = (data ?? []).map((r) => r.id as string);
+  if (!ids.includes(imageId)) return { ok: false, error: "Foto não encontrada." };
+  const ordered = [imageId, ...ids.filter((id) => id !== imageId)];
+  for (const [i, id] of ordered.entries()) {
+    const { error } = await supabase.from("product_images").update({ sort_order: i }).eq("id", id);
+    if (error) return { ok: false, error: dbErrorMessage(error) };
+  }
+  return { ok: true, message: "Foto principal definida." };
 }

@@ -136,6 +136,9 @@ export function ProductForm({
         </label>
       </fieldset>
 
+      {!product && canEdit && (
+        <p className="text-sm text-muted-foreground sm:col-span-2">As fotos são adicionadas logo após cadastrar o produto.</p>
+      )}
       <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
         {canEdit ? (
           <Button type="submit" disabled={pending}>

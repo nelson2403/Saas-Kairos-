@@ -406,3 +406,46 @@ describe("visão de estoque", () => {
     expect(other.rows).toHaveLength(0);
   });
 });
+
+describe("fotos de produtos", () => {
+  let p: string;
+  const path = (company: string, product: string, file = "a.webp") => `${company}/products/${product}/${file}`;
+  const upload = (user: string, name: string) =>
+    asUser(db, user, (tx) => tx.query("insert into storage.objects (bucket_id, name) values ('product-images', $1)", [name]));
+  const register = (user: string, company: string, product: string, storagePath: string) =>
+    asUser(db, user, (tx) =>
+      tx.query("insert into public.product_images (company_id, product_id, storage_path) values ($1, $2, $3)", [company, product, storagePath]),
+    );
+
+  beforeAll(async () => {
+    p = await createProduct("Vela Foto");
+  });
+
+  it("bucket existe, é público e aceita só imagens até 5 MB", async () => {
+    const res = await db.query<{ public: boolean; file_size_limit: string; allowed_mime_types: string[] }>(
+      "select public, file_size_limit::text, allowed_mime_types from storage.buckets where id = 'product-images'",
+    );
+    expect(res.rows[0]).toEqual({ public: true, file_size_limit: "5242880", allowed_mime_types: ["image/jpeg", "image/png", "image/webp"] });
+  });
+
+  it("proprietário envia na pasta da empresa; operador e outra empresa não", async () => {
+    await upload(owner, path(companyA, p));
+    await expect(upload(operator, path(companyA, p, "b.webp"))).rejects.toThrow(/row-level security/);
+    await expect(upload(outsider, path(companyA, p, "c.webp"))).rejects.toThrow(/row-level security/);
+    await expect(upload(owner, path(companyB, p, "d.webp"))).rejects.toThrow(/row-level security/);
+  });
+
+  it("registro da foto exige caminho do próprio produto", async () => {
+    await register(owner, companyA, p, path(companyA, p));
+    const other = await createProduct("Vela Outra");
+    await expect(register(owner, companyA, p, path(companyA, other, "x.webp"))).rejects.toThrow(/check constraint/);
+    await expect(register(operator, companyA, p, path(companyA, p, "y.webp"))).rejects.toThrow(/row-level security/);
+  });
+
+  it("limite de 8 fotos por produto", async () => {
+    const q = await createProduct("Vela Muitas Fotos");
+    for (let i = 0; i < 8; i++) await asUser(db, owner, (tx) =>
+      tx.query("insert into public.product_images (company_id, product_id, storage_path) values ($1, $2, $3)", [companyA, q, path(companyA, q, `${i}.webp`)]), { commit: true });
+    await expect(register(owner, companyA, q, path(companyA, q, "9.webp"))).rejects.toThrow(/Limite de 8/);
+  });
+});

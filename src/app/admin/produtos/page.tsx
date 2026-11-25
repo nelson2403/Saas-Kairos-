@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Tags } from "lucide-react";
+import Image from "next/image";
+import { ImageOff, Plus, Tags } from "lucide-react";
 import { PageHeader, SectionSkeleton } from "@/components/layout/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Input, Select } from "@/components/ui/input";
 import { EmptyState, Table, Td, Th } from "@/components/ui/table";
 import { requireMembership } from "@/lib/auth/dal";
 import { formatMoney, formatQuantity, marginPercent } from "@/modules/inventory/domain";
+import { productImageUrl } from "@/modules/inventory/images";
 import { canManageCatalog, categoryPaths, getStockOverview, listCategories, listProducts } from "@/modules/inventory/service";
 
 export const metadata: Metadata = { title: "Produtos" };
@@ -104,10 +106,13 @@ async function ProductList({ searchParams }: { searchParams: PageProps<"/admin/p
               return (
                 <tr key={p.id} className="hover:bg-muted/40">
                   <Td>
-                    <Link href={`/admin/produtos/${p.id}`} className="font-medium hover:underline">
-                      {p.name}
+                    <Link href={`/admin/produtos/${p.id}`} className="flex items-center gap-3">
+                      <Thumb path={[...p.images].sort((a, b) => a.sort_order - b.sort_order)[0]?.storage_path} />
+                      <span>
+                        <span className="font-medium hover:underline">{p.name}</span>
+                        {p.sku && <span className="block text-xs text-muted-foreground">SKU {p.sku}</span>}
+                      </span>
                     </Link>
-                    {p.sku && <span className="block text-xs text-muted-foreground">SKU {p.sku}</span>}
                   </Td>
                   <Td className="text-muted-foreground">{p.category?.name ?? "—"}</Td>
                   <Td className="text-right tabular-nums">{formatMoney(p.sale_price)}</Td>
@@ -130,5 +135,17 @@ async function ProductList({ searchParams }: { searchParams: PageProps<"/admin/p
         </Table>
       )}
     </>
+  );
+}
+
+function Thumb({ path }: { path?: string }) {
+  return (
+    <span className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+      {path ? (
+        <Image src={productImageUrl(path)} alt="" fill sizes="44px" className="object-cover" />
+      ) : (
+        <ImageOff className="size-4 text-muted-foreground" aria-hidden />
+      )}
+    </span>
   );
 }

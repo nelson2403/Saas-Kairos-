@@ -28,7 +28,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Logo oficial (SVG ou PNG ≥ 1024 px, fundo transparente) | Ícones e assinatura definitivos (hoje provisórios) | Kairós |
 | ~~Projeto Supabase + migration da fundação~~ | — | feito em 24/11 |
 | ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
-| Aplicar `20261125000100_single_company.sql` e `20261125000200_inventory.sql` no SQL Editor | Fase 2 no ambiente publicado | dev |
+| Aplicar `20261125000100_single_company.sql`, `20261125000200_inventory.sql` e `20261125000300_product_images.sql` no SQL Editor | Fase 2 no ambiente publicado | dev |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
@@ -74,7 +74,8 @@ Critério: *movimentações persistidas e saldos consistentes (testes de concorr
 | Empresa única (2ª empresa recusada; novo usuário vê "acesso não liberado") | Testado | `supabase/migrations/20261125000100_single_company.sql`, `src/app/onboarding/page.tsx` | 4 testes (`single-company.test.ts`) | liberar acesso de funcionários: tela Equipe |
 | Unidades de medida (sistema + personalizadas) e conversões; massa↔volume por densidade | Testado | migration de estoque, `src/modules/inventory/domain.ts`, Configurações | banco (kg→g, l→g com densidade, recusa sem densidade/dimensão errada) + 5 testes de domínio | — |
 | Categorias em árvore (sem ciclos, sem cruzar empresas) | Testado | `src/app/admin/produtos/categorias/*` | ciclo e FK entre empresas | — |
-| Produtos: cadastro, SKU/código de barras únicos, preço, custo, margem, mínimo, situação, "exibir na loja" | Testado | `src/app/admin/produtos/*` | RLS por papel, SKU único, validação de preço | **fotos (Storage) e leitor de código de barras pela câmera** |
+| Produtos: cadastro, SKU/código de barras únicos, preço, custo, margem, mínimo, situação, "exibir na loja" | Testado | `src/app/admin/produtos/*` | RLS por papel, SKU único, validação de preço | leitor de código de barras pela câmera (adiado; leitor USB funciona) |
+| Fotos de produtos (até 8, principal, redução automática no aparelho, bucket com RLS por empresa e papel) | Testado | `20261125000300_product_images.sql`, `src/app/admin/produtos/[id]/product-photos.tsx` | 4 testes (bucket, envio por papel/empresa, caminho do produto, limite) | o cadastro dos produtos será feito pela proprietária |
 | Matérias-primas: unidade, densidade, mínimo, último custo | Testado | `src/app/admin/materias-primas/*` | conversão e custo convertido | fornecedor preferencial entra na Fase 4 |
 | Movimentação transacional (`fn_register_stock_movement`): entrada, saída, ajuste, perda, descarte, devolução | Testado | migration de estoque, `src/app/admin/movimentacoes/*` | 11 testes + **4 testes de concorrência em PostgreSQL 17 real** | — |
 | Custo médio ponderado | Testado | `private.apply_stock_movement` | 2 testes | — |
@@ -85,11 +86,11 @@ Critério: *movimentações persistidas e saldos consistentes (testes de concorr
 | Tela Estoque (abas, busca, valor em estoque) e alertas de mínimo (Dashboard) | Implementado | `src/app/admin/estoque/page.tsx`, `src/app/admin/page.tsx` | visão testada no banco | validação visual no ambiente publicado |
 | Movimentação offline: fila no aparelho, envio automático, mesma chave de idempotência; conflitos ficam para o usuário decidir (Status do app) | Implementado | `movement-form.tsx`, `src/app/api/sync/route.ts`, `sync-manager.tsx`, `pending-operations.tsx` | idempotência (banco + concorrência) e motor de sync (unitários); rota responde 401 sem sessão | teste manual offline no aparelho |
 
-Resultado: **73 testes passando** (`npm test`), lint e build sem erros.
+Resultado: **77 testes passando** (`npm test`), lint e build sem erros.
 
 ### Como validar a Fase 2
 
-1. No Supabase → SQL Editor, executar em ordem `20261125000100_single_company.sql` e `20261125000200_inventory.sql`.
+1. No Supabase → SQL Editor, executar em ordem `20261125000100_single_company.sql`, `20261125000200_inventory.sql` e `20261125000300_product_images.sql`.
 2. Abrir o preview da Vercel do branch `fase-2-estoque`.
 3. Cadastrar uma matéria-prima em gramas e dar entrada em kg; conferir o saldo convertido.
 4. Cadastrar um produto, dar entrada, tentar uma saída maior que o saldo (deve recusar), estornar uma movimentação.

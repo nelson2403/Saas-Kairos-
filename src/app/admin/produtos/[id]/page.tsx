@@ -17,9 +17,11 @@ import {
   getProduct,
   listCategories,
   listMovements,
+  listProductImages,
   listUnits,
 } from "@/modules/inventory/service";
 import { ProductForm } from "../product-form";
+import { ProductPhotos } from "./product-photos";
 
 export const metadata: Metadata = { title: "Produto" };
 
@@ -34,13 +36,14 @@ export default function ProductPage(props: PageProps<"/admin/produtos/[id]">) {
 async function ProductDetail({ params, searchParams }: PageProps<"/admin/produtos/[id]">) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
-  const { role } = await requireMembership();
-  const [product, categories, units, balance, movements] = await Promise.all([
+  const { role, companyId } = await requireMembership();
+  const [product, categories, units, balance, movements, images] = await Promise.all([
     getProduct(id),
     listCategories().then(categoryPaths),
     listUnits(),
     getItemBalance("product", id),
     listMovements({ itemType: "product", itemId: id }),
+    listProductImages(id),
   ]);
   if (!product) notFound();
 
@@ -55,11 +58,21 @@ async function ProductDetail({ params, searchParams }: PageProps<"/admin/produto
       </PageHeader>
       {sp.criado && (
         <p role="status" className="mb-4 rounded-md bg-success/10 p-3 text-sm text-success">
-          Produto cadastrado. Registre o saldo inicial em “Movimentar estoque” (tipo Entrada).
+          Produto cadastrado. Adicione as fotos abaixo e registre o saldo inicial em “Movimentar estoque” (tipo Entrada).
         </p>
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-3">
+          <CardTitle className="mb-4">Fotos</CardTitle>
+          <ProductPhotos
+            productId={product.id}
+            companyId={companyId}
+            productName={product.name}
+            images={images}
+            canEdit={canManageCatalog(role)}
+          />
+        </Card>
         <Card className="lg:col-span-2">
           <CardTitle className="mb-4">Cadastro</CardTitle>
           <ProductForm
