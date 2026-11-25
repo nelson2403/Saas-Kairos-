@@ -144,6 +144,7 @@ Convenções obrigatórias:
 ### Grupos e relacionamentos principais
 
 **Empresa e acesso** (Fase 1)
+- Instalação de **empresa única** (`private.app_config.single_company = true`): a função de criação recusa uma segunda empresa; a estrutura multi-tenant permanece para uma futura versão SaaS.
 - `companies` — dados da empresa, fuso, moeda, configurações gerais (`settings jsonb`).
 - `profiles` (1:1 `auth.users`) — nome, telefone, avatar.
 - `roles` — papéis do sistema (`owner`, `admin`, `manager`, `operator`, `viewer`) com `permissions jsonb`; `company_id` nulo = papel global.
@@ -162,7 +163,8 @@ Convenções obrigatórias:
 - `stock_balances` — saldo por item (`quantity`, `reserved_quantity`, `CHECK quantity >= 0` salvo se a empresa permitir negativo).
 - `stock_movements` — imutável. Tipo (`entrada`, `saida`, `compra`, `producao_consumo`, `producao_entrada`, `venda`, `ajuste`, `perda`, `descarte`, `devolucao`, `transferencia`, `estorno`), quantidade, saldo anterior/posterior, custo unitário, responsável, motivo, documento (`source_type` + `source_id`), `reversal_of`.
 - `inventory_counts` (+ itens) — inventário que gera ajustes.
-- `stock_reservations` — pedido, item, quantidade, `expires_at`, status (`ativa`, `consumida`, `liberada`, `expirada`).
+- `stock_reservations` — pedido, item, quantidade, `expires_at`, status (`ativa`, `consumida`, `liberada`, `expirada`). **Criada na Fase 5** junto com pedidos (a coluna `reserved_quantity` já existe no saldo).
+- Implementado na Fase 2: `fn_register_stock_movement`, `fn_reverse_stock_movement`, `fn_create_inventory_count`, `fn_apply_inventory_count`, `fn_cancel_inventory_count`, visão `stock_overview` (`security_invoker`). `transferencia` ficou fora até existir cadastro de locais de estoque.
 
 **Produção** (Fase 3)
 - `product_recipes` (versão ativa por produto, rendimento, % perda) → `recipe_items` (matéria-prima, quantidade, unidade).

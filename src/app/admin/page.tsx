@@ -6,6 +6,7 @@ import { Card, CardDescription, CardTitle, Badge } from "@/components/ui/card";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PLANNED_MODULES } from "@/config/modules";
 import { requireMembership } from "@/lib/auth/dal";
+import { countBelowMin } from "@/modules/inventory/service";
 
 export default function DashboardPage() {
   return (
@@ -17,10 +18,12 @@ export default function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardTitle>Indicadores</CardTitle>
-          <CardDescription className="mt-1">
-            Faturamento, vendas, ticket médio, estoque baixo e demais indicadores passam a ser calculados a partir
-            dos dados reais conforme os módulos de estoque (Fase 2) e vendas/financeiro (Fase 5) forem entregues.
-            Nenhum número é exibido antes de existir no banco.
+          <Suspense fallback={<div className="mt-3 h-16 animate-pulse rounded-md bg-muted" />}>
+            <StockIndicator />
+          </Suspense>
+          <CardDescription className="mt-4">
+            Faturamento, vendas e ticket médio entram com vendas e financeiro (Fase 5). Nenhum número é exibido antes
+            de existir no banco.
           </CardDescription>
         </Card>
 
@@ -35,7 +38,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="lg:col-span-3">
-          <CardTitle>Módulos em construção</CardTitle>
+          <CardTitle>Próximos módulos</CardTitle>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {PLANNED_MODULES.map((m) => (
               <li key={m.slug}>
@@ -50,6 +53,22 @@ export default function DashboardPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+async function StockIndicator() {
+  const below = await countBelowMin();
+  return (
+    <Link
+      href="/admin/estoque?ver=baixo"
+      className="mt-3 flex items-center justify-between rounded-md border border-border p-4 hover:bg-muted/50"
+    >
+      <span>
+        <span className="block text-sm text-muted-foreground">Itens abaixo do estoque mínimo</span>
+        <span className="font-display text-3xl tabular-nums">{below}</span>
+      </span>
+      <Badge tone={below > 0 ? "warning" : "success"}>{below > 0 ? "Repor" : "Em dia"}</Badge>
+    </Link>
   );
 }
 

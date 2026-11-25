@@ -10,7 +10,7 @@ import { join } from "node:path";
 
 const MIGRATIONS_DIR = join(process.cwd(), "supabase", "migrations");
 
-const SUPABASE_STUB = `
+export const SUPABASE_STUB = `
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
@@ -38,15 +38,20 @@ alter default privileges in schema public grant all on sequences to anon, authen
 alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
 `;
 
+/** Migrations em ordem: [nome do arquivo, SQL]. */
+export function readMigrations(): [string, string][] {
+  return readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .map((f) => [f, readFileSync(join(MIGRATIONS_DIR, f), "utf8")]);
+}
+
 export async function createTestDb() {
   const db = new PGlite();
   await db.exec(SUPABASE_STUB);
-  const files = readdirSync(MIGRATIONS_DIR)
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
-  for (const file of files) {
+  for (const [file, sql] of readMigrations()) {
     try {
-      await db.exec(readFileSync(join(MIGRATIONS_DIR, file), "utf8"));
+      await db.exec(sql);
     } catch (error) {
       throw new Error(`Falha na migration ${file}: ${(error as Error).message}`);
     }

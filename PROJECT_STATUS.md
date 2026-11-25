@@ -3,15 +3,15 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 24/11/2026
+Última atualização: 25/11/2026
 
 ## Resumo
 
 | Fase | Status | Observação |
 |---|---|---|
 | 0 — Auditoria e planejamento | Concluído | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| 1 — Fundação + PWA | **Bloqueado** (código testado) | Falta: projeto Supabase, deploy na Vercel e teste de instalação em aparelhos reais |
-| 2 — Produtos e estoque | Não iniciado | Aguarda aceite da Fase 1 |
+| 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
+| 2 — Produtos e estoque | **Testado** (aguardando validação) | Falta aplicar 2 migrations no Supabase e validar no ambiente publicado |
 | 3 — Produção | Não iniciado | |
 | 4 — Clientes, fornecedores e compras | Não iniciado | |
 | 5 — Vendas e financeiro | Não iniciado | |
@@ -26,10 +26,11 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Dependência | Bloqueia | Responsável |
 |---|---|---|
 | Logo oficial (SVG ou PNG ≥ 1024 px, fundo transparente) | Ícones e assinatura definitivos (hoje provisórios) | Kairós |
-| Projeto Supabase (URL, publishable key, secret key) + migrations aplicadas | Login real, critério da Fase 1 | Kairós / dev |
-| Projeto Vercel ligado ao GitHub + variáveis de ambiente | Ambiente de teste publicado | Kairós / dev |
-| ~~Push do código para `github.com/nelson2403/Saas-Kairos-`~~ | — | feito (branch `fase-1-fundacao`) |
-| Aparelho Android e iPhone para teste de instalação | Critério da Fase 1 | Kairós |
+| ~~Projeto Supabase + migration da fundação~~ | — | feito em 24/11 |
+| ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
+| Aplicar `20261125000100_single_company.sql` e `20261125000200_inventory.sql` no SQL Editor | Fase 2 no ambiente publicado | dev |
+| Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
+| Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
 ## Fase 1 — Fundação + PWA
 
@@ -64,6 +65,37 @@ Critério: *aplicação publicada em ambiente de teste, com login funcional, ban
 3. Validar no preview: login, criação da empresa, edição em Configurações, Status do app mostrando "Banco de dados: Conectado".
 4. Instalar no Android (Chrome) e no iPhone (Safari) e abrir em modo aplicativo.
 
+## Fase 2 — Produtos, matérias-primas e estoque
+
+Critério: *movimentações persistidas e saldos consistentes (testes de concorrência na função de movimentação).*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Empresa única (2ª empresa recusada; novo usuário vê "acesso não liberado") | Testado | `supabase/migrations/20261125000100_single_company.sql`, `src/app/onboarding/page.tsx` | 4 testes (`single-company.test.ts`) | liberar acesso de funcionários: tela Equipe |
+| Unidades de medida (sistema + personalizadas) e conversões; massa↔volume por densidade | Testado | migration de estoque, `src/modules/inventory/domain.ts`, Configurações | banco (kg→g, l→g com densidade, recusa sem densidade/dimensão errada) + 5 testes de domínio | — |
+| Categorias em árvore (sem ciclos, sem cruzar empresas) | Testado | `src/app/admin/produtos/categorias/*` | ciclo e FK entre empresas | — |
+| Produtos: cadastro, SKU/código de barras únicos, preço, custo, margem, mínimo, situação, "exibir na loja" | Testado | `src/app/admin/produtos/*` | RLS por papel, SKU único, validação de preço | **fotos (Storage) e leitor de código de barras pela câmera** |
+| Matérias-primas: unidade, densidade, mínimo, último custo | Testado | `src/app/admin/materias-primas/*` | conversão e custo convertido | fornecedor preferencial entra na Fase 4 |
+| Movimentação transacional (`fn_register_stock_movement`): entrada, saída, ajuste, perda, descarte, devolução | Testado | migration de estoque, `src/app/admin/movimentacoes/*` | 11 testes + **4 testes de concorrência em PostgreSQL 17 real** | — |
+| Custo médio ponderado | Testado | `private.apply_stock_movement` | 2 testes | — |
+| Estoque negativo bloqueado (opção da empresa em Configurações) | Testado | Configurações → Estoque | 2 testes | — |
+| Estorno (uma vez, motivo obrigatório, só gerente+; documentos só pelo próprio documento) | Testado | `fn_reverse_stock_movement` | 4 testes + estorno simultâneo | — |
+| Movimentações imutáveis; saldos sem escrita pela API | Testado | triggers e `revoke` | 3 testes | — |
+| Inventário: abre com saldo do sistema, contagem por item (salva sozinha), aplica ajustes só nas diferenças | Testado | `src/app/admin/estoque/inventario/*` | 4 testes | — |
+| Tela Estoque (abas, busca, valor em estoque) e alertas de mínimo (Dashboard) | Implementado | `src/app/admin/estoque/page.tsx`, `src/app/admin/page.tsx` | visão testada no banco | validação visual no ambiente publicado |
+| Movimentação offline: fila no aparelho, envio automático, mesma chave de idempotência; conflitos ficam para o usuário decidir (Status do app) | Implementado | `movement-form.tsx`, `src/app/api/sync/route.ts`, `sync-manager.tsx`, `pending-operations.tsx` | idempotência (banco + concorrência) e motor de sync (unitários); rota responde 401 sem sessão | teste manual offline no aparelho |
+
+Resultado: **73 testes passando** (`npm test`), lint e build sem erros.
+
+### Como validar a Fase 2
+
+1. No Supabase → SQL Editor, executar em ordem `20261125000100_single_company.sql` e `20261125000200_inventory.sql`.
+2. Abrir o preview da Vercel do branch `fase-2-estoque`.
+3. Cadastrar uma matéria-prima em gramas e dar entrada em kg; conferir o saldo convertido.
+4. Cadastrar um produto, dar entrada, tentar uma saída maior que o saldo (deve recusar), estornar uma movimentação.
+5. Abrir um inventário, contar um item com diferença e aplicar; conferir o ajuste em Movimentações.
+6. No celular: desligar a internet com a tela "Registrar movimentação" aberta, lançar, religar e conferir em Status do app.
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -71,3 +103,7 @@ Critério: *aplicação publicada em ambiente de teste, com login funcional, ban
 - **Rotas do painel em `/admin`** e loja na raiz; PWA com `start_url=/admin`.
 - **Cores de texto derivadas** ("tinta") adicionadas à paleta por acessibilidade — a paleta oficial não foi alterada.
 - **Um usuário ↔ uma empresa** na versão 1 (multi-empresa por usuário fica para a fase SaaS).
+- **Instalação de empresa única** (`private.app_config.single_company`). A estrutura multi-empresa e o RLS continuam; virar SaaS é desligar a opção.
+- **Unidade de estoque fixa** após a primeira movimentação (evita saldos reinterpretados em outra unidade).
+- **Inventário aplica "saldo = contado"** usando o saldo do momento da aplicação; a tela mostra quando o saldo mudou desde a abertura.
+- **Ajustes de inventário não são estornados avulsos** (pertencem ao documento de inventário).

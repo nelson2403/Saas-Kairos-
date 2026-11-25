@@ -22,6 +22,9 @@ beforeAll(async () => {
         .rows[0].id,
     { commit: true },
   );
+  // O isolamento entre empresas continua garantido por RLS; para testá-lo,
+  // desliga-se o modo empresa única (ver single-company.test.ts).
+  await db.exec("update private.app_config set single_company = false");
   companyB = await asUser(
     db,
     bob,

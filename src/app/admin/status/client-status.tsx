@@ -63,8 +63,8 @@ export function ClientStatus() {
           />
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">
-          A fila local está pronta; as primeiras operações que podem ser preparadas offline (movimentações de
-          estoque) chegam na Fase 2. Pagamentos e vendas nunca são confirmados offline.
+          Movimentações de estoque feitas sem conexão ficam pendentes neste aparelho e só alteram o estoque quando
+          o servidor confirma. Pagamentos e vendas nunca são confirmados offline.
         </p>
       </Card>
 

@@ -48,6 +48,7 @@ export async function createCompany(input: Record<string, unknown>): Promise<Act
   });
   if (error) {
     if (error.message.includes("já vinculado")) return { ok: false, error: "Seu usuário já está vinculado a uma empresa." };
+    if (error.message.includes("já configurada")) return { ok: false, error: "O sistema já foi configurado. Peça ao administrador para liberar seu acesso." };
     return { ok: false, error: "Não foi possível criar a empresa." };
   }
   return { ok: true, companyId: data as string };

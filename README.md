@@ -20,7 +20,7 @@ npm run dev                  # http://localhost:3000
 |---|---|
 | `npm run dev` | servidor de desenvolvimento (Service Worker desligado) |
 | `npm run build && npm start` | build de produção local (Service Worker ativo) |
-| `npm test` | testes: banco real em PGlite (migrations + RLS) e unidades |
+| `npm test` | testes: banco em PGlite (migrations + RLS), concorrência em PostgreSQL 17 embutido (baixado pelo npm) e unidades |
 | `npm run lint` | ESLint |
 | `npm run icons` | regenera ícones do PWA a partir de `public/brand/logo.svg` |
 | `npm run pwa:check -- http://localhost:3000 <pasta>` | verificação do PWA em navegador real (Edge/Chrome instalado) |
@@ -28,7 +28,7 @@ npm run dev                  # http://localhost:3000
 ## Configurando o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (região São Paulo recomendada).
-2. Aplique as migrations de `supabase/migrations/` em ordem — pelo **SQL Editor** (colar e executar cada arquivo) ou com a Supabase CLI (`supabase link` + `supabase db push`).
+2. Aplique as migrations de `supabase/migrations/` em ordem de nome (a cada fase surgem novas; aplique só as que ainda não rodou) — pelo **SQL Editor** (colar e executar cada arquivo) ou com a Supabase CLI (`supabase link` + `supabase db push`).
 3. **Authentication → Sign In / Providers**: mantenha E-mail habilitado e **desative "Allow new users to sign up"** (o painel é restrito à equipe).
 4. **Authentication → Users → Add user**: crie o usuário administrador com e-mail e senha.
 5. **Authentication → URL Configuration**: Site URL = URL do ambiente (ex.: a URL de preview da Vercel).

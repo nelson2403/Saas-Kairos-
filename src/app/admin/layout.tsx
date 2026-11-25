@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { BottomNav, Sidebar } from "@/components/layout/admin-nav";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { ConnectionPill } from "@/components/pwa/connection-status";
+import { SyncManager } from "@/components/pwa/sync-manager";
 import { Logo } from "@/components/brand/logo";
 import { requireMembership } from "@/lib/auth/dal";
 
@@ -48,6 +49,7 @@ async function UserMenu() {
         <p className="text-xs text-muted-foreground">{companyName}</p>
       </div>
       <LogoutButton userId={user.id} compact />
+      <SyncManager userId={user.id} />
     </div>
   );
 }

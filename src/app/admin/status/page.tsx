@@ -6,6 +6,7 @@ import { Card, CardTitle, Badge } from "@/components/ui/card";
 import { requireMembership } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 import { APP_VERSION } from "@/lib/env";
+import { PendingOperations } from "@/components/pwa/pending-operations";
 import { ClientStatus } from "./client-status";
 
 export const metadata: Metadata = { title: "Status do app" };
@@ -22,9 +23,17 @@ export default function StatusPage() {
             <ServerCheck />
           </Suspense>
         </Card>
+        <Suspense>
+          <DeviceOperations />
+        </Suspense>
       </div>
     </>
   );
+}
+
+async function DeviceOperations() {
+  const { user } = await requireMembership();
+  return <PendingOperations userId={user.id} />;
 }
 
 /** Consulta real ao banco (com RLS do usuário) e mede a latência. */

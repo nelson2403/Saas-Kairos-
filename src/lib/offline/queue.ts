@@ -69,17 +69,20 @@ function notify() {
 }
 
 export async function enqueue<P>(input: {
+  /** Chave de idempotência; informe a mesma já usada numa tentativa online. */
+  id?: string;
   userId: string;
   companyId: string;
   operation: string;
   payload: P;
 }): Promise<PendingOperation<P>> {
+  const { id, ...rest } = input;
   const op: PendingOperation<P> = {
-    id: crypto.randomUUID(),
+    id: id ?? crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     status: "pending",
     attempts: 0,
-    ...input,
+    ...rest,
   };
   const db = await getDb();
   await db.put("pending_operations", op);

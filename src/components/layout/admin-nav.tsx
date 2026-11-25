@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
@@ -11,9 +12,36 @@ function isActive(pathname: string, href: string) {
   return href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Menu lateral (tablet/desktop). */
+/**
+ * O caminho atual só existe em tempo de execução. A navegação é renderizada sem
+ * destaque no App Shell pré-renderizado e ganha o item ativo ao hidratar.
+ */
 export function Sidebar() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<SidebarView pathname="" />}>
+      <SidebarWithPath />
+    </Suspense>
+  );
+}
+
+export function BottomNav() {
+  return (
+    <Suspense fallback={<BottomNavView pathname="" />}>
+      <BottomNavWithPath />
+    </Suspense>
+  );
+}
+
+function SidebarWithPath() {
+  return <SidebarView pathname={usePathname()} />;
+}
+
+function BottomNavWithPath() {
+  return <BottomNavView pathname={usePathname()} />;
+}
+
+/** Menu lateral (tablet/desktop). */
+function SidebarView({ pathname }: { pathname: string }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
       <div className="flex h-20 items-center justify-center border-b border-border">
@@ -51,8 +79,7 @@ export function Sidebar() {
 }
 
 /** Navegação inferior (celular): Início, Estoque, Produção, Pedidos, Mais. */
-export function BottomNav() {
-  const pathname = usePathname();
+function BottomNavView({ pathname }: { pathname: string }) {
   const items = [...MOBILE_NAV, { label: "Mais", href: "/admin/mais", icon: MoreHorizontal }];
   const mainHrefs: string[] = MOBILE_NAV.map((i) => i.href);
   return (
@@ -64,7 +91,7 @@ export function BottomNav() {
         {items.map((item) => {
           const active =
             item.href === "/admin/mais"
-              ? pathname === "/admin/mais" || !mainHrefs.some((h) => isActive(pathname, h))
+              ? pathname === "/admin/mais" || (pathname !== "" && !mainHrefs.some((h) => isActive(pathname, h)))
               : isActive(pathname, item.href);
           return (
             <li key={item.href}>
