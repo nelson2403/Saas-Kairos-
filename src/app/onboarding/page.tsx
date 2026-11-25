@@ -24,6 +24,7 @@ export default function OnboardingPage() {
 
 async function Gate() {
   const user = await requireUser();
+  if (user.mustChangePassword) redirect("/definir-senha");
   if (await getMembership()) redirect("/admin");
 
   // Instalação de empresa única: depois da configuração inicial, novos usuários

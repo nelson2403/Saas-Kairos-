@@ -9,6 +9,8 @@ export type CurrentUser = {
   id: string;
   email: string | null;
   fullName: string | null;
+  /** Conta criada/redefinida com senha temporária: precisa criar a própria senha. */
+  mustChangePassword: boolean;
 };
 
 export type Membership = {
@@ -34,6 +36,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     id: data.claims.sub,
     email: (data.claims.email as string | undefined) ?? null,
     fullName: profile?.full_name ?? null,
+    // app_metadata só é gravável com a chave secreta: o usuário não consegue forjar nem apagar.
+    mustChangePassword: (data.claims.app_metadata as { must_change_password?: boolean } | undefined)?.must_change_password === true,
   };
 });
 
@@ -46,7 +50,8 @@ export async function requireUser(): Promise<CurrentUser> {
 /** Vínculo ativo do usuário com uma empresa (versão 1: no máximo um). */
 export const getMembership = cache(async (): Promise<Membership | null> => {
   const user = await getCurrentUser();
-  if (!user) return null;
+  // Senha temporária ainda não trocada: nenhum acesso aos dados (inclui /api/sync).
+  if (!user || user.mustChangePassword) return null;
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -67,7 +72,8 @@ export const getMembership = cache(async (): Promise<Membership | null> => {
 
 /** Exige usuário com empresa; sem empresa vai para o onboarding. */
 export async function requireMembership(): Promise<Membership> {
-  await requireUser();
+  const user = await requireUser();
+  if (user.mustChangePassword) redirect("/definir-senha");
   const membership = await getMembership();
   if (!membership) redirect("/onboarding");
   return membership;

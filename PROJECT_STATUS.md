@@ -16,7 +16,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
 | 5 — Vendas e financeiro | **Concluído** (aceito em 29/11/2026) | Publicado em produção |
 | 6 — Loja virtual | **Concluído** (aceito em 30/11/2026) | Publicado em produção. Pendente: revisão da política de privacidade pela proprietária |
-| 7 — Personalização da loja | **Testado** (publicado em produção; aguardando validação) | Migration aplicada em 30/11. Validar em produção pelo roteiro "Como validar a Fase 7" |
+| 7 — Personalização da loja | **Concluído** (aceito pelo usuário) | Publicado em produção |
+| Equipe (acessos) | **Testado** (aguardando validação) | Falta aplicar `20261201000100_team.sql` e validar no Preview do branch `fase-7b-equipe` |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
 | 9 — WhatsApp / Evolution API | Não iniciado | Depende de servidor Evolution API |
 | 10 — PWA avançada e finalização | Não iniciado | |
@@ -37,7 +38,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Variável `CRON_SECRET` na Vercel (e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL` = endereço público) | Expiração diária de reservas; checkout; sitemap/SEO | dev |
 | Revisão da Política de Privacidade (`/privacidade`) pela proprietária | Publicação da loja | Kairós |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
-| Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
+| Aplicar `20261201000100_team.sql` no SQL Editor | Tela de Equipe | dev |
+| Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — Equipe → Tornar proprietário |
 
 ## Fase 1 — Fundação + PWA
 
@@ -251,6 +253,28 @@ Resultado: **188 testes passando** (`npm test`), lint, typecheck e build sem err
 5. **Publicar** com uma nota: a loja passa a mostrar a nova aparência (pode levar até 1 min por causa do cache).
 6. Em Versões publicadas, restaurar a versão anterior no rascunho e publicar de novo.
 
+
+## Equipe (acessos) — entre as Fases 7 e 8
+
+Critério: *o proprietário dá acesso a outra pessoa sem mexer no Supabase.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Criar acesso (nome, e-mail, papel): conta criada no servidor com a chave secreta e senha temporária mostrada uma única vez, com mensagem pronta para copiar | Testado | `supabase/migrations/20261201000100_team.sql` (`fn_add_member`), `src/modules/team/service.ts`, `src/app/admin/equipe/*` | e-mail sem diferenciar maiúsculas, pessoa repetida, e-mail sem conta | convite por e-mail (exige SMTP próprio no Supabase) |
+| Troca obrigatória da senha temporária no primeiro login (marcação em `app_metadata`, que só o servidor grava); sem a troca nenhum dado é liberado | Testado | `src/lib/auth/dal.ts`, `src/app/definir-senha/*` | build + rotas protegidas | — |
+| Alterar papel, suspender/reativar (corta o acesso na hora), nova senha temporária | Testado | `fn_set_member_role`, `fn_set_member_status`, `fn_member_user_for_admin` | 4 testes (ninguém altera a si mesmo nem o proprietário; administrador não mexe em administrador) | — |
+| Transferir a propriedade (só o proprietário; confirmação digitada; quem transfere vira administrador) | Testado | `fn_transfer_ownership` | 1 teste | — |
+| Membros só mudam pelas funções (sem escrita direta pela API) | Testado | `revoke` na migration | 1 teste | — |
+| Alterar a própria senha (ícone de chave no topo do painel) | Testado | `/definir-senha` | — | — |
+
+### Como validar a Equipe
+
+1. No Supabase → SQL Editor, executar `20261201000100_team.sql`.
+2. Conferir que `SUPABASE_SECRET_KEY` está na Vercel (Production e Preview).
+3. Menu **Equipe** → Adicionar pessoa com um e-mail seu de teste, papel Operador. Copiar a mensagem com a senha temporária.
+4. Em uma janela anônima, entrar com esse e-mail e a senha temporária: o sistema pede uma senha nova antes de mostrar qualquer coisa.
+5. Com a conta de teste, conferir o que o papel permite; depois, na conta principal, suspender o acesso e ver que a conta de teste perde tudo.
+6. Para a proprietária: criar o acesso como **Administrador**. Quando for a hora da entrega, usar **Tornar proprietário**.
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).

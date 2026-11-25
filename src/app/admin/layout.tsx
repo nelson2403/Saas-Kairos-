@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { KeyRound } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { BottomNav, Sidebar } from "@/components/layout/admin-nav";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { ConnectionPill } from "@/components/pwa/connection-status";
@@ -48,6 +50,9 @@ async function UserMenu() {
         <p className="text-sm font-medium">{user.fullName ?? user.email}</p>
         <p className="text-xs text-muted-foreground">{companyName}</p>
       </div>
+      <Link href="/definir-senha" className={buttonVariants({ variant: "ghost", size: "icon" })} aria-label="Alterar minha senha" title="Alterar minha senha">
+        <KeyRound aria-hidden />
+      </Link>
       <LogoutButton userId={user.id} compact />
       <SyncManager userId={user.id} />
     </div>

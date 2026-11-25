@@ -138,7 +138,7 @@ describe("isolamento multi-tenant (RLS)", () => {
           [companyA, bob],
         ),
       ),
-    ).rejects.toThrow(/row-level security/);
+    ).rejects.toThrow(/row-level security|permission denied/);
   });
 
   it("auditoria visível só para proprietário/administrador", async () => {

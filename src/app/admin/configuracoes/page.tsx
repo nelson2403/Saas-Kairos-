@@ -50,8 +50,8 @@ export default function SettingsPage() {
         <Card>
           <CardTitle>Demais configurações</CardTitle>
           <CardDescription className="mt-1">
-            Aparência da loja (Fase 7), Asaas (Fase 8), WhatsApp (Fase 9), equipe e permissões, notificações e segurança (Fase 10)
-            serão adicionados aqui nas respectivas fases.
+            Asaas (Fase 8), WhatsApp (Fase 9), notificações e segurança (Fase 10)
+            serão adicionados aqui nas respectivas fases. A aparência da loja fica em Personalizar loja e os acessos em Equipe.
           </CardDescription>
         </Card>
       </div>

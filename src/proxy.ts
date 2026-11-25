@@ -9,7 +9,7 @@ import { createServerClient } from "@supabase/ssr";
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  const isProtected = ["/admin", "/onboarding", "/previa"].some((p) => request.nextUrl.pathname.startsWith(p));
+  const isProtected = ["/admin", "/onboarding", "/previa", "/definir-senha"].some((p) => request.nextUrl.pathname.startsWith(p));
 
   if (!url || !key) {
     // Sem Supabase configurado não há como autenticar: área privada fica fechada.
@@ -51,5 +51,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/onboarding/:path*", "/previa", "/login"],
+  matcher: ["/admin/:path*", "/onboarding/:path*", "/previa", "/definir-senha", "/login"],
 };
