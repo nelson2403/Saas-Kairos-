@@ -14,7 +14,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
 | 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
 | 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
-| 5 — Vendas e financeiro | **Testado** (aguardando validação) | Falta aplicar `20261128000100_sales_finance.sql` e validar no Preview do branch `fase-5-vendas` |
+| 5 — Vendas e financeiro | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 28/11; falta o roteiro de validação |
 | 6 — Loja virtual | Não iniciado | |
 | 7 — Personalização da loja | Não iniciado | |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
@@ -31,7 +31,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
 | ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
 | ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
-| Aplicar `20261128000100_sales_finance.sql` no SQL Editor | Fase 5 no ambiente publicado | dev |
+| ~~Migration da Fase 5~~ | — | aplicada em 28/11 |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
