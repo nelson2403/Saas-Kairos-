@@ -135,7 +135,7 @@ export function ProductForm({
           <input type="checkbox" name="show_in_store" defaultChecked={product?.show_in_store ?? false} className="mt-0.5 size-4 accent-tinta" />
           <span>
             Exibir na loja virtual
-            <span className="block text-xs text-muted-foreground">A loja pública entra na Fase 6; a escolha já fica salva.</span>
+            <span className="block text-xs text-muted-foreground">Aparece na loja quando ativo e com a loja aberta (Configurações → Loja virtual).</span>
           </span>
         </label>
       </fieldset>

@@ -7,6 +7,8 @@ import { getCompany } from "@/modules/company/service";
 import { canManageCatalog, getStockSettings, listUnits } from "@/modules/inventory/service";
 import { CompanyForm } from "./company-form";
 import { StockSettingsForm, UnitsManager } from "./stock-settings";
+import { StoreSettingsForm } from "./store-settings";
+import { getStoreSettingsForAdmin } from "@/modules/store/service";
 
 export const metadata: Metadata = { title: "Configurações" };
 
@@ -39,15 +41,27 @@ export default function SettingsPage() {
           </Suspense>
         </Card>
         <Card>
+          <CardTitle>Loja virtual</CardTitle>
+          <CardDescription className="mb-5 mt-1">Abertura da loja, retirada, entrega, reserva e instruções de pagamento.</CardDescription>
+          <Suspense fallback={<SectionSkeleton lines={3} />}>
+            <StoreSection />
+          </Suspense>
+        </Card>
+        <Card>
           <CardTitle>Demais configurações</CardTitle>
           <CardDescription className="mt-1">
-            Equipe e permissões, pagamentos, entrega e retirada (Fases 5–6), loja (Fase 7), Asaas (Fase 8), WhatsApp
-            (Fase 9), notificações e segurança (Fase 10) serão adicionados aqui nas respectivas fases.
+            Aparência da loja (Fase 7), Asaas (Fase 8), WhatsApp (Fase 9), equipe e permissões, notificações e segurança (Fase 10)
+            serão adicionados aqui nas respectivas fases.
           </CardDescription>
         </Card>
       </div>
     </>
   );
+}
+
+async function StoreSection() {
+  const { settings, canEdit } = await getStoreSettingsForAdmin();
+  return <StoreSettingsForm settings={settings} canEdit={canEdit} />;
 }
 
 async function CompanySection() {

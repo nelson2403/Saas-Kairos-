@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { STORE_TAG } from "@/modules/store/data";
 import { redirect } from "next/navigation";
 import type { ActionResult } from "@/lib/action-result";
 import {
@@ -21,6 +22,7 @@ export async function saveProductAction(
   if (!result.ok) return result;
   revalidatePath("/admin/produtos");
   revalidatePath("/admin/estoque");
+  revalidateTag(STORE_TAG, "max");
   if (!id) redirect(`/admin/produtos/${result.data.id}?criado=1`);
   return { ok: true, message: result.message };
 }
@@ -31,7 +33,10 @@ export async function saveCategoryAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const result = await saveCategory(id, Object.fromEntries(formData));
-  if (result.ok) revalidatePath("/admin/produtos", "layout");
+  if (result.ok) {
+    revalidatePath("/admin/produtos", "layout");
+    revalidateTag(STORE_TAG, "max");
+  }
   return result;
 }
 
@@ -42,6 +47,7 @@ export async function deleteCategoryAction(id: string): Promise<ActionResult> {
 }
 
 function revalidateProduct(productId: string) {
+  revalidateTag(STORE_TAG, "max");
   revalidatePath(`/admin/produtos/${productId}`);
   revalidatePath("/admin/produtos");
 }

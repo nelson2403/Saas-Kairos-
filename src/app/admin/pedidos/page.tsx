@@ -11,6 +11,7 @@ import { requireMembership } from "@/lib/auth/dal";
 import { formatMoney } from "@/modules/inventory/domain";
 import { CHANNEL_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE, formatOrderNumber } from "@/modules/sales/domain";
 import { ORDERS_PAGE_SIZE, canSell, listOrders } from "@/modules/sales/service";
+import { expireReservations } from "@/modules/store/service";
 
 export const metadata: Metadata = { title: "Pedidos" };
 
@@ -55,6 +56,7 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/pedidos"
   const sp = await searchParams;
   const tab = TABS.find((t) => t.key === sp.ver) ?? TABS[0];
   const page = Math.max(1, Number(sp.pagina) || 1);
+  await expireReservations(); // reservas da loja vencidas viram cancelamento antes de listar
   const { rows, total } = await listOrders({ group: tab.key === "todos" ? undefined : tab.key, page });
   const pages = Math.ceil(total / ORDERS_PAGE_SIZE);
   const href = (p: number) => `/admin/pedidos?ver=${tab.key}${p > 1 ? `&pagina=${p}` : ""}`;

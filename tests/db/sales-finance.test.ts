@@ -139,7 +139,7 @@ describe("pedido e reserva", () => {
 
   it("produto inativo não é vendido; leitura não cria pedido; desconto maior que o total é recusado", async () => {
     const inactive = await product(20, 5, 10, "inactive");
-    await expect(createOrder(owner, [{ product_id: inactive, quantity: 1 }])).rejects.toThrow(/não está ativo/);
+    await expect(createOrder(owner, [{ product_id: inactive, quantity: 1 }])).rejects.toThrow(/não está disponível/);
     const p = await product(20, 5);
     await expect(createOrder(viewer, [{ product_id: p, quantity: 1 }])).rejects.toThrow(/Sem permissão/);
     await expect(createOrder(owner, [{ product_id: p, quantity: 1 }], { discount: 30 })).rejects.toThrow(/Desconto maior/);

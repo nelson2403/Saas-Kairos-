@@ -98,7 +98,7 @@ export async function createUser(db: TestDb, email: string, fullName?: string) {
  */
 export async function asRole<T>(
   db: TestDb,
-  role: "anon" | "authenticated",
+  role: "anon" | "authenticated" | "service_role",
   userId: string | null,
   fn: (tx: TestDb) => Promise<T>,
   { commit = false } = {},

@@ -11,6 +11,8 @@ import { requireMembership } from "@/lib/auth/dal";
 import { formatMoney, formatQuantity } from "@/modules/inventory/domain";
 import { CHANNEL_LABEL, ORDER_STATUS_LABEL, ORDER_STATUS_TONE, PAYMENT_METHOD_LABEL, formatOrderNumber } from "@/modules/sales/domain";
 import { canRefund, canSell, getOrder } from "@/modules/sales/service";
+import { formatAddress, formatPhone } from "@/modules/partners/domain";
+import { DELIVERY_LABEL, whatsappLink } from "@/modules/store/domain";
 import { CancelOrder, DeliverOrder, PayOrder, RefundOrder } from "./order-actions";
 
 export const metadata: Metadata = { title: "Pedido" };
@@ -110,6 +112,34 @@ async function Detail({ params, searchParams }: PageProps<"/admin/pedidos/[id]">
                   "Sem cliente"
                 )}
               </Row>
+              {order.contact?.phone && (
+                <Row label="WhatsApp">
+                  <a href={whatsappLink(order.contact.phone) ?? "#"} target="_blank" rel="noopener noreferrer" className="underline">
+                    {formatPhone(order.contact.phone)}
+                  </a>
+                </Row>
+              )}
+              {order.contact?.email && <Row label="E-mail">{order.contact.email}</Row>}
+              {order.delivery_method && (
+                <Row label={DELIVERY_LABEL[order.delivery_method]}>
+                  {order.delivery_address
+                    ? formatAddress({
+                        street: order.delivery_address.street ?? null,
+                        address_number: order.delivery_address.address_number ?? null,
+                        complement: order.delivery_address.complement ?? null,
+                        district: order.delivery_address.district ?? null,
+                        city: order.delivery_address.city ?? null,
+                        state: order.delivery_address.state ?? null,
+                        postal_code: order.delivery_address.postal_code ?? null,
+                      }).map((l) => (
+                        <span key={l} className="block">
+                          {l}
+                        </span>
+                      ))
+                    : "No local combinado"}
+                </Row>
+              )}
+              {order.reserved_until && order.status === "pending" && <Row label="Reserva até">{dateTime.format(new Date(order.reserved_until))}</Row>}
               {order.due_date && order.status === "pending" && <Row label="Vencimento">{dateOnly.format(new Date(`${order.due_date}T12:00:00`))}</Row>}
               {order.payments.map((p) => (
                 <Row key={p.id} label="Pagamento">

@@ -58,11 +58,29 @@ export async function startPg() {
     }
   }
 
+  /** Conexão como o servidor da aplicação (chave secreta → papel service_role). */
+  async function asServerConn<T>(fn: (c: pg.Client) => Promise<T>): Promise<T> {
+    const c = new pg.Client(config);
+    await c.connect();
+    try {
+      await c.query("begin");
+      await c.query("set local role service_role");
+      const out = await fn(c);
+      await c.query("commit");
+      return out;
+    } catch (e) {
+      await c.query("rollback").catch(() => {});
+      throw e;
+    } finally {
+      await c.end();
+    }
+  }
+
   async function stop() {
     await admin.end();
     await server.stop();
     rmSync(dataDir, { recursive: true, force: true });
   }
 
-  return { admin, asUserConn, stop };
+  return { admin, asUserConn, asServerConn, stop };
 }

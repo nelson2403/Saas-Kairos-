@@ -65,6 +65,10 @@ export type OrderDetail = OrderListItem & {
   delivered_at: string | null;
   closed_at: string | null;
   created_by: string | null;
+  delivery_method: "retirada" | "entrega" | null;
+  delivery_address: Record<string, string | null> | null;
+  reserved_until: string | null;
+  contact: { phone: string | null; email: string | null } | null;
   items: {
     id: string;
     product_id: string;
@@ -87,7 +91,7 @@ export async function getOrder(id: string): Promise<OrderDetail | null> {
       .from("orders")
       .select(
         "id, number, channel, status, subtotal, discount, shipping, total, due_date, notes, close_reason, created_at, paid_at, delivered_at, closed_at, created_by, " +
-          "customer:customers(id, name), items:order_items(id, product_id, quantity, unit_price, total, unit_cost, sort_order, product:products(id, name, sku, unit:measurement_units(code)))",
+          "delivery_method, delivery_address, reserved_until, customer:customers(id, name), contact:customers(phone, email), items:order_items(id, product_id, quantity, unit_price, total, unit_cost, sort_order, product:products(id, name, sku, unit:measurement_units(code)))",
       )
       .eq("id", id)
       .maybeSingle(),

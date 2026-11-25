@@ -3,7 +3,7 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 28/11/2026
+Última atualização: 29/11/2026
 
 ## Resumo
 
@@ -14,8 +14,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
 | 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
 | 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
-| 5 — Vendas e financeiro | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 28/11; falta o roteiro de validação |
-| 6 — Loja virtual | Não iniciado | |
+| 5 — Vendas e financeiro | **Concluído** (aceito em 29/11/2026) | Publicado em produção |
+| 6 — Loja virtual | **Testado** (aguardando validação) | Falta aplicar `20261129000100_storefront.sql`, cadastrar `CRON_SECRET` na Vercel e validar no Preview do branch `fase-6-loja` |
 | 7 — Personalização da loja | Não iniciado | |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
 | 9 — WhatsApp / Evolution API | Não iniciado | Depende de servidor Evolution API |
@@ -32,6 +32,9 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
 | ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
 | ~~Migration da Fase 5~~ | — | aplicada em 28/11 |
+| Aplicar `20261129000100_storefront.sql` no SQL Editor | Fase 6 no ambiente publicado | dev |
+| Variável `CRON_SECRET` na Vercel (e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL` = endereço público) | Expiração diária de reservas; checkout; sitemap/SEO | dev |
+| Revisão da Política de Privacidade (`/privacidade`) pela proprietária | Publicação da loja | Kairós |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
@@ -191,6 +194,36 @@ Resultado: **157 testes passando** (`npm test`), lint, typecheck e build sem err
 9. Em um pedido de compra, lançar a conta a pagar.
 10. Relatórios: abrir "Vendas por produto", exportar Excel e imprimir/salvar PDF.
 
+## Fase 6 — Loja virtual
+
+Critério: *loja funcional integrada ao estoque.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Leitura pública só por funções com campos públicos (sem custo, saldo bruto ou clientes) | Testado | `supabase/migrations/20261129000100_storefront.sql` (`store_*`) | catálogo filtrado, sem custo, anônimo sem acesso às tabelas | — |
+| Início, catálogo (categorias, busca, paginação), página do produto (fotos, disponibilidade), cache com invalidação ao salvar produto/fotos/configuração | Implementado | `src/app/(store)/*`, `src/modules/store/data.ts` | build; rotas respondem | validação visual |
+| Carrinho no aparelho (só id e quantidade; preço e estoque sempre do servidor) | Testado | `src/components/store/cart.tsx`, `use-quote.ts` | 2 testes de domínio | — |
+| Checkout no servidor: dados do cliente, retirada/entrega com taxa, consentimentos LGPD, aceite da política, campo anti-robô, limite de tentativas por IP (hash), idempotência | Testado | `fn_store_checkout`, `fn_rate_limit`, `src/modules/store/service.ts` | 6 testes + **25 checkouts simultâneos para 5 unidades** e reenvio simultâneo | pagamento online (Fase 8) |
+| Pedido da loja reserva estoque com prazo; reserva vencida cancela o pedido e libera o estoque (no carrinho, no checkout, na lista de pedidos e diariamente pelo Vercel Cron) | Testado | `fn_expire_reservations`, `/api/cron/expire-reservations`, `vercel.json` | 1 teste | expiração ao minuto exigiria pg_cron |
+| Acompanhamento do pedido por link secreto, sem dados pessoais | Testado | `store_order`, `/pedido/[token]` | 1 teste | — |
+| Cliente reaproveitado por CPF/e-mail; loja só concede consentimento, nunca revoga; endereço de entrega mascarado na auditoria e apagado na anonimização | Testado | `fn_store_checkout`, `fn_anonymize_customer` | 3 testes | — |
+| SEO: títulos, descrições, canônicos, Open Graph, dados estruturados de Produto, sitemap.xml, robots | Implementado | `generateMetadata`, `src/app/sitemap.ts`, `src/app/robots.ts` | rotas respondem | domínio próprio (opcional) |
+| Configurações → Loja virtual (abrir/fechar, WhatsApp, retirada, entrega e taxa, reserva, instruções de pagamento); pedido no painel mostra contato e entrega | Implementado | `src/app/admin/configuracoes/store-settings.tsx`, página do pedido | build | — |
+| Política de privacidade | Implementado | `src/app/(store)/privacidade/page.tsx` | — | revisão pela proprietária |
+
+Resultado: **177 testes passando** (`npm test`), lint, typecheck e build sem erros.
+
+### Como validar a Fase 6
+
+1. No Supabase → SQL Editor, executar `20261129000100_storefront.sql`.
+2. Na Vercel → Settings → Environment Variables: criar `CRON_SECRET` (texto aleatório longo) e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL`.
+3. No painel (Preview do branch `fase-6-loja`): Configurações → Loja virtual → marcar "Loja aberta", informar WhatsApp e instruções de pagamento, salvar.
+4. Em um produto com foto e saldo, marcar "Exibir na loja virtual".
+5. Abrir a página inicial do Preview: produto aparece; abrir, adicionar ao carrinho, finalizar com retirada.
+6. Conferir no painel: Pedidos → pedido do canal "Loja virtual" com contato; Estoque com a quantidade reservada.
+7. Registrar o pagamento no painel e abrir o link do pedido: situação "Pagamento confirmado".
+8. Testar no celular (layout e carrinho).
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -218,4 +251,9 @@ Resultado: **157 testes passando** (`npm test`), lint, typecheck e build sem err
 - **Financeiro visível só para proprietário, administrador e gerente** (operador vende, mas não vê contas a pagar/receber).
 - **Vendas e pedidos exigem conexão** (não confirmar venda nem pagamento offline).
 - **PDF via impressão do navegador** (Salvar como PDF); Excel gerado no servidor (.xlsx).
+- **Loja lê o banco só por funções públicas**; checkout e limite de tentativas usam a chave secreta no servidor (nunca no navegador).
+- **Preço da loja é sempre o do cadastro** (o navegador só envia produto e quantidade).
+- **Pagamento na loja até a Fase 8**: instruções definidas pela empresa + registro manual no painel; nenhuma confirmação automática.
+- **Reserva com prazo** (padrão 48 h, configurável). Expiração verificada a cada carrinho/checkout/lista de pedidos e uma vez por dia (limite do Vercel Cron no plano Hobby).
+- **Cliente da loja** reaproveitado por CPF ou e-mail; a loja nunca sobrescreve dados existentes nem revoga consentimentos.
 - **Abrir ordem exige conexão** (numeração e ficha vigente vêm do servidor); **concluir** pode ser feito offline e é validado no servidor ao sincronizar.
