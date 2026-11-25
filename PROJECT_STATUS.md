@@ -13,7 +13,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
 | 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
-| 4 — Clientes, fornecedores e compras | **Testado** (aguardando validação) | Falta aplicar `20261127000100_partners_purchases.sql` e validar no Preview do branch `fase-4-compras` |
+| 4 — Clientes, fornecedores e compras | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 27/11; falta o roteiro de validação |
 | 5 — Vendas e financeiro | Não iniciado | |
 | 6 — Loja virtual | Não iniciado | |
 | 7 — Personalização da loja | Não iniciado | |
@@ -30,7 +30,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
 | ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
 | ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
-| Aplicar `20261127000100_partners_purchases.sql` no SQL Editor | Fase 4 no ambiente publicado | dev |
+| ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
