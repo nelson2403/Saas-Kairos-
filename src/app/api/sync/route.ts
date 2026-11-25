@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getMembership } from "@/lib/auth/dal";
 import type { SyncResponse } from "@/lib/offline/sync";
 import { canMoveStock, registerMovement } from "@/modules/inventory/service";
+import { canProduce, completeOrder } from "@/modules/production/service";
 
 /**
  * Recebe uma operação da fila offline. O `id` da operação é a chave de
@@ -40,6 +41,14 @@ export async function POST(request: Request) {
       const result = await registerMovement({ ...strings, op_id: op.id });
       if (result.ok) return json({ status: "applied", result: result.data });
       if (result.conflict) return json({ status: "conflict", reason: result.error ?? "Conflito de estoque." });
+      const reason = result.error ?? Object.values(result.fieldErrors ?? {})[0] ?? "Operação recusada.";
+      return json({ status: "rejected", reason });
+    }
+    case "production.complete": {
+      if (!canProduce(membership.role)) return json({ status: "rejected", reason: "Sem permissão para concluir produção." });
+      const result = await completeOrder({ ...op.payload, op_id: op.id });
+      if (result.ok) return json({ status: "applied", result: result.data });
+      if (result.conflict) return json({ status: "conflict", reason: result.error ?? "Conflito na produção." });
       const reason = result.error ?? Object.values(result.fieldErrors ?? {})[0] ?? "Operação recusada.";
       return json({ status: "rejected", reason });
     }

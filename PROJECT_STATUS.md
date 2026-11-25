@@ -3,7 +3,7 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 25/11/2026
+Última atualização: 26/11/2026
 
 ## Resumo
 
@@ -11,8 +11,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 |---|---|---|
 | 0 — Auditoria e planejamento | Concluído | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
-| 2 — Produtos e estoque | **Testado** (aguardando validação) | Falta aplicar 2 migrations no Supabase e validar no ambiente publicado |
-| 3 — Produção | Não iniciado | |
+| 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
+| 3 — Produção | **Testado** (aguardando validação) | Falta aplicar `20261126000100_production.sql` no Supabase e validar no ambiente publicado |
 | 4 — Clientes, fornecedores e compras | Não iniciado | |
 | 5 — Vendas e financeiro | Não iniciado | |
 | 6 — Loja virtual | Não iniciado | |
@@ -28,7 +28,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Logo oficial (SVG ou PNG ≥ 1024 px, fundo transparente) | Ícones e assinatura definitivos (hoje provisórios) | Kairós |
 | ~~Projeto Supabase + migration da fundação~~ | — | feito em 24/11 |
 | ~~Projeto Vercel + variáveis de ambiente~~ | — | feito em 24/11 (`saas-kairos.vercel.app`) |
-| Aplicar `20261125000100_single_company.sql`, `20261125000200_inventory.sql` e `20261125000300_product_images.sql` no SQL Editor | Fase 2 no ambiente publicado | dev |
+| ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
+| Aplicar `20261126000100_production.sql` no SQL Editor | Fase 3 no ambiente publicado | dev |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
@@ -97,6 +98,34 @@ Resultado: **77 testes passando** (`npm test`), lint e build sem erros.
 5. Abrir um inventário, contar um item com diferença e aplicar; conferir o ajuste em Movimentações.
 6. No celular: desligar a internet com a tela "Registrar movimentação" aberta, lançar, religar e conferir em Status do app.
 
+## Fase 3 — Produção
+
+Critério: *produção transacional, sem baixa parcial.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Ficha técnica por produto: rendimento, perda prevista (%), insumos em qualquer unidade compatível | Testado | `supabase/migrations/20261126000100_production.sql`, `src/app/admin/producao/fichas/*` | conversão, insumo repetido, unidade incompatível, permissão | — |
+| Versões da ficha (salvar = nova versão; anteriores imutáveis; histórico na tela) | Testado | `fn_save_recipe`, trigger `recipe_guard` | 2 testes | — |
+| Custo estimado e margem da ficha com o custo atual dos insumos (médio; sem ele, o último) | Testado | `src/modules/production/domain.ts` | 4 testes de domínio | — |
+| Ordem de produção: numeração OP-0001 por empresa, necessidade de insumos × saldo | Testado | `fn_create_production_order`, `src/app/admin/producao/nova/*` | cálculo igual ao banco, numeração | — |
+| Concluir ordem: consumo real ajustável, quantidade produzida (perda), tudo ou nada | Testado | `fn_complete_production_order`, `src/app/admin/producao/[id]/*` | 6 testes + **4 testes de concorrência em PostgreSQL 17 real** | — |
+| Custo real da produção (consumo × custo médio do insumo) → custo médio e custo do produto | Testado | mesma função | custo, custo incompleto sem distorcer o médio | — |
+| Cancelar ordem em aberto; estornar ordem concluída (gerente+, uma vez, sem saldo negativo) | Testado | `fn_cancel_production_order`, `fn_reverse_production_order` | 3 testes + estorno simultâneo | — |
+| Conclusão offline: fila no aparelho com a mesma chave de idempotência; falta de insumo vira conflito | Implementado | `complete-form.tsx`, `/api/sync` (`production.complete`) | idempotência no banco e em concorrência | teste manual offline no aparelho |
+| Integração: movimentações ligadas à ordem, unidade de estoque travada por ficha, ordens em aberto no Dashboard | Implementado | `movement-table.tsx`, páginas de produto e matéria-prima, `src/app/admin/page.tsx` | build | validação visual |
+
+Resultado: **107 testes passando** (`npm test`), lint, typecheck e build sem erros.
+
+### Como validar a Fase 3
+
+1. No Supabase → SQL Editor, executar `20261126000100_production.sql`.
+2. Ter ao menos 2 matérias-primas com entrada **com custo** (ex.: cera em g, pavio em un) e 1 produto.
+3. Produção → Fichas técnicas → produto: montar a ficha (ex.: rende 1 un, 200 g de cera + 1 pavio) e conferir custo estimado e margem. Salvar de novo com outra quantidade e ver a versão 2 no histórico.
+4. Produção → Nova ordem: produzir 3; conferir a necessidade × estoque.
+5. Na ordem, concluir com consumo real diferente do planejado; conferir saldos (Estoque), custo por unidade e as movimentações "Consumo na produção"/"Entrada da produção".
+6. Abrir outra ordem maior que o estoque de um insumo e tentar concluir: deve recusar sem baixar nada.
+7. Estornar a ordem concluída e conferir que os saldos voltaram.
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -108,3 +137,10 @@ Resultado: **77 testes passando** (`npm test`), lint e build sem erros.
 - **Unidade de estoque fixa** após a primeira movimentação (evita saldos reinterpretados em outra unidade).
 - **Inventário aplica "saldo = contado"** usando o saldo do momento da aplicação; a tela mostra quando o saldo mudou desde a abertura.
 - **Ajustes de inventário não são estornados avulsos** (pertencem ao documento de inventário).
+- **Ficha técnica versionada e imutável**: cada ordem guarda a versão usada; alterar a ficha nunca muda custos passados.
+- **Perda prevista da ficha** é acrescida ao consumo (fator 1 + perda%). A perda real aparece como produzido < planejado e como consumo real.
+- **Insumos da ficha são só matérias-primas** (produto dentro de produto fica para quando houver necessidade real).
+- **Custo da produção** = Σ consumo real × custo médio do insumo no momento (sem custo médio, último custo). Se algum insumo não tem custo, a ordem fica com custo "incompleto" e não altera o custo médio nem o custo cadastrado do produto.
+- **Conclusão tudo ou nada**: insumos travados em ordem fixa (id) para não haver deadlock entre ordens simultâneas.
+- **Estorno de produção** devolve os insumos sem alterar o custo médio deles e não restaura o "custo" cadastrado do produto (fica o da última produção).
+- **Abrir ordem exige conexão** (numeração e ficha vigente vêm do servidor); **concluir** pode ser feito offline e é validado no servidor ao sincronizar.

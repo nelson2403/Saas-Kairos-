@@ -7,6 +7,7 @@ import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PLANNED_MODULES } from "@/config/modules";
 import { requireMembership } from "@/lib/auth/dal";
 import { countBelowMin } from "@/modules/inventory/service";
+import { countOpenOrders } from "@/modules/production/service";
 
 export default function DashboardPage() {
   return (
@@ -19,7 +20,10 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardTitle>Indicadores</CardTitle>
           <Suspense fallback={<div className="mt-3 h-16 animate-pulse rounded-md bg-muted" />}>
-            <StockIndicator />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <StockIndicator />
+              <ProductionIndicator />
+            </div>
           </Suspense>
           <CardDescription className="mt-4">
             Faturamento, vendas e ticket médio entram com vendas e financeiro (Fase 5). Nenhum número é exibido antes
@@ -61,13 +65,26 @@ async function StockIndicator() {
   return (
     <Link
       href="/admin/estoque?ver=baixo"
-      className="mt-3 flex items-center justify-between rounded-md border border-border p-4 hover:bg-muted/50"
+      className="flex items-center justify-between rounded-md border border-border p-4 hover:bg-muted/50"
     >
       <span>
         <span className="block text-sm text-muted-foreground">Itens abaixo do estoque mínimo</span>
         <span className="font-display text-3xl tabular-nums">{below}</span>
       </span>
       <Badge tone={below > 0 ? "warning" : "success"}>{below > 0 ? "Repor" : "Em dia"}</Badge>
+    </Link>
+  );
+}
+
+async function ProductionIndicator() {
+  const open = await countOpenOrders();
+  return (
+    <Link href="/admin/producao" className="flex items-center justify-between rounded-md border border-border p-4 hover:bg-muted/50">
+      <span>
+        <span className="block text-sm text-muted-foreground">Ordens de produção em aberto</span>
+        <span className="font-display text-3xl tabular-nums">{open}</span>
+      </span>
+      <Badge tone={open > 0 ? "warning" : "neutral"}>{open > 0 ? "Concluir" : "Nenhuma"}</Badge>
     </Link>
   );
 }

@@ -81,6 +81,7 @@ export type Movement = {
   reason: string | null;
   notes: string | null;
   source_type: string | null;
+  source_id: string | null;
   reversal_of: string | null;
   created_at: string;
   created_by: string | null;
@@ -381,13 +382,19 @@ export async function listMovableItems(): Promise<MovableItem[]> {
 // Movimentações
 // ---------------------------------------------------------------------------
 const MOVEMENT_SELECT =
-  "id, type, quantity, input_quantity, balance_before, balance_after, unit_cost, reason, notes, source_type, reversal_of, created_at, created_by, " +
+  "id, type, quantity, input_quantity, balance_before, balance_after, unit_cost, reason, notes, source_type, source_id, reversal_of, created_at, created_by, " +
   "product:products(id, name, unit:measurement_units(code)), raw_material:raw_materials(id, name, unit:measurement_units(code)), " +
   "input_unit:measurement_units(code)";
 
 export const MOVEMENTS_PAGE_SIZE = 50;
 
-export async function listMovements(filters: { itemType?: ItemType; itemId?: string; type?: string; page?: number }) {
+export async function listMovements(filters: {
+  itemType?: ItemType;
+  itemId?: string;
+  type?: string;
+  sourceId?: string;
+  page?: number;
+}) {
   await requireMembership();
   const supabase = await createClient();
   const page = Math.max(1, filters.page ?? 1);
@@ -400,6 +407,7 @@ export async function listMovements(filters: { itemType?: ItemType; itemId?: str
   if (filters.itemId && filters.itemType === "product") query = query.eq("product_id", filters.itemId);
   if (filters.itemId && filters.itemType === "raw_material") query = query.eq("raw_material_id", filters.itemId);
   if (filters.type) query = query.eq("type", filters.type);
+  if (filters.sourceId) query = query.eq("source_id", filters.sourceId);
   const { data, error, count } = await query;
   if (error) throw new Error("Não foi possível carregar as movimentações.");
 

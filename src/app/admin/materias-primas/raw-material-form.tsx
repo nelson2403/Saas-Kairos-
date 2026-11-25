@@ -44,7 +44,7 @@ export function RawMaterialForm({
           label="Unidade de estoque"
           htmlFor="unit_id"
           error={errors.unit_id}
-          hint={unitLocked ? "Não pode ser alterada: já há movimentações." : "Unidade em que o saldo é controlado (ex.: g, ml)."}
+          hint={unitLocked ? "Não pode ser alterada: já há movimentações ou uso em ficha técnica." : "Unidade em que o saldo é controlado (ex.: g, ml)."}
         >
           <Select id="unit_id" name="unit_id" value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={unitLocked} required>
             {units.map((u) => (

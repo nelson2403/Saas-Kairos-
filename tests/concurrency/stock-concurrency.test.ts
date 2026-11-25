@@ -4,51 +4,16 @@
  * ficar negativo nem duplica operações quando muitas requisições chegam juntas.
  */
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import EmbeddedPostgres from "embedded-postgres";
-import pg from "pg";
+import type pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { SUPABASE_STUB, readMigrations } from "../db/harness";
-
-const PORT = 54000 + Math.floor(Math.random() * 900);
-const dataDir = mkdtempSync(join(tmpdir(), "kairos-pg-"));
-const server = new EmbeddedPostgres({
-  databaseDir: dataDir,
-  user: "postgres",
-  password: "postgres",
-  port: PORT,
-  persistent: false,
-  initdbFlags: ["--encoding=UTF8", "--locale=C"], // igual ao Supabase (no Windows o padrão seria WIN1252)
-  onLog: () => {},
-  onError: () => {},
-});
-const config = { host: "127.0.0.1", port: PORT, user: "postgres", password: "postgres", database: "kairos" };
+import { startPg } from "./pg-server";
 
 let admin: pg.Client;
+let asUserConn: Awaited<ReturnType<typeof startPg>>["asUserConn"];
+let stop: () => Promise<void>;
 let owner: string;
 let companyId: string;
 let unitUn: string;
-
-/** Uma conexão nova por chamada, como requisições independentes da API. */
-async function asUserConn<T>(userId: string, fn: (c: pg.Client) => Promise<T>): Promise<T> {
-  const c = new pg.Client(config);
-  await c.connect();
-  try {
-    await c.query("begin");
-    await c.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: userId, role: "authenticated" })]);
-    await c.query("set local role authenticated");
-    const out = await fn(c);
-    await c.query("commit");
-    return out;
-  } catch (e) {
-    await c.query("rollback").catch(() => {});
-    throw e;
-  } finally {
-    await c.end();
-  }
-}
 
 const register = (opId: string, productId: string, type: string, qty: number) =>
   asUserConn(owner, (c) =>
@@ -79,28 +44,14 @@ async function state(productId: string) {
 }
 
 beforeAll(async () => {
-  await server.initialise();
-  await server.start();
-  await server.createDatabase("kairos");
-  admin = new pg.Client(config);
-  await admin.connect();
-  await admin.query(SUPABASE_STUB);
-  for (const [file, sql] of readMigrations()) {
-    try {
-      await admin.query(sql);
-    } catch (e) {
-      throw new Error(`Falha na migration ${file}: ${(e as Error).message}`);
-    }
-  }
+  ({ admin, asUserConn, stop } = await startPg());
   owner = (await admin.query<{ id: string }>("insert into auth.users (email) values ('owner@example.com') returning id")).rows[0].id;
   companyId = await asUserConn(owner, async (c) => (await c.query("select public.create_company_with_owner('Kairós') as id")).rows[0].id);
   unitUn = (await admin.query<{ id: string }>("select id from public.measurement_units where code = 'un' and company_id is null")).rows[0].id;
 }, 180_000);
 
 afterAll(async () => {
-  await admin?.end();
-  await server.stop();
-  rmSync(dataDir, { recursive: true, force: true });
+  await stop?.();
 });
 
 describe("concorrência na movimentação de estoque", () => {

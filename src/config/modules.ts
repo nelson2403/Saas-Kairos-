@@ -40,7 +40,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { slug: "", label: "Dashboard", href: "/admin", icon: LayoutDashboard, phase: 1, status: "available", summary: "Visão geral da operação." },
   { slug: "produtos", label: "Produtos", href: "/admin/produtos", icon: Package, phase: 2, status: "available", summary: "Cadastro, fotos, preços, margem, código de barras e disponibilidade na loja." },
   { slug: "materias-primas", label: "Matérias-primas", href: "/admin/materias-primas", icon: FlaskConical, phase: 2, status: "available", summary: "Insumos, unidades, conversões e estoque mínimo." },
-  { slug: "producao", label: "Produção", href: "/admin/producao", icon: Factory, phase: 3, status: "planned", summary: "Fichas técnicas, ordens de produção, custos, perdas e estornos." },
+  { slug: "producao", label: "Produção", href: "/admin/producao", icon: Factory, phase: 3, status: "available", summary: "Fichas técnicas, ordens de produção, custos, perdas e estornos." },
   { slug: "estoque", label: "Estoque", href: "/admin/estoque", icon: Warehouse, phase: 2, status: "available", summary: "Saldos de produtos acabados e matérias-primas, entradas, saídas, ajustes e inventário." },
   { slug: "movimentacoes", label: "Movimentações", href: "/admin/movimentacoes", icon: ArrowLeftRight, phase: 2, status: "available", summary: "Histórico auditável de todas as movimentações de estoque." },
   { slug: "compras", label: "Compras", href: "/admin/compras", icon: ShoppingCart, phase: 4, status: "planned", summary: "Pedidos de compra e recebimentos que geram entrada de estoque." },

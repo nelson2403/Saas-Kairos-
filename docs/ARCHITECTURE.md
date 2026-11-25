@@ -169,6 +169,7 @@ Convenções obrigatórias:
 **Produção** (Fase 3)
 - `product_recipes` (versão ativa por produto, rendimento, % perda) → `recipe_items` (matéria-prima, quantidade, unidade).
 - `production_orders` (status, quantidade, custo calculado, `reversal_of`) → `production_items` (consumo real por material).
+- Implementado na Fase 3: `product_recipes` versionada (`version`, `is_active`, imutável) → `recipe_items`; `production_orders` (`number` sequencial via `document_sequences`, `planned/produced_quantity`, `material_cost`, `unit_cost`, `cost_complete`, status `planned/completed/canceled/reversed`) → `production_order_items` (planejado × real, custo). Funções `fn_save_recipe`, `fn_deactivate_recipe`, `fn_create_production_order`, `fn_complete_production_order`, `fn_cancel_production_order`, `fn_reverse_production_order`. O estorno é registrado nas próprias movimentações (`reversal_of`), não na ordem.
 
 **Compras** (Fase 4)
 - `suppliers`, `purchase_orders` → `purchase_items`. Só `fn_receive_purchase` gera entrada de estoque.

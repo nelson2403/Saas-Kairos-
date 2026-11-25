@@ -17,12 +17,14 @@ export function ProductForm({
   units,
   canEdit,
   unitLocked,
+  hasRecipe = false,
 }: {
   product: Product | null;
   categories: { id: string; path: string }[];
   units: Unit[];
   canEdit: boolean;
   unitLocked: boolean;
+  hasRecipe?: boolean;
 }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(
     saveProductAction.bind(null, product?.id ?? null),
@@ -61,7 +63,7 @@ export function ProductForm({
           label="Unidade de estoque"
           htmlFor="unit_id"
           error={errors.unit_id}
-          hint={unitLocked ? "Não pode ser alterada: o produto já tem movimentações." : "Como o saldo é contado (ex.: un)."}
+          hint={unitLocked ? "Não pode ser alterada: o produto já tem movimentações ou ficha técnica." : "Como o saldo é contado (ex.: un)."}
         >
           <Select
             id="unit_id"
@@ -97,8 +99,10 @@ export function ProductForm({
           error={errors.cost_price}
           hint={
             margin === null
-              ? "Opcional. Na Fase 3 o custo passa a vir da ficha técnica."
-              : `Margem: ${margin.toLocaleString("pt-BR")}% · lucro ${formatMoney(parseDecimal(price) - parseDecimal(cost))} por unidade`
+              ? hasRecipe
+                ? "Atualizado automaticamente a cada produção concluída."
+                : "Opcional. Com ficha técnica, passa a ser atualizado a cada produção."
+              : `${hasRecipe ? "Última produção · " : ""}Margem: ${margin.toLocaleString("pt-BR")}% · lucro ${formatMoney(parseDecimal(price) - parseDecimal(cost))} por unidade`
           }
         >
           <Input

@@ -48,7 +48,13 @@ export function MovementTable({ rows, canReverse, showItem = true }: { rows: Row
                 <span className="flex flex-wrap items-center gap-1.5">
                   {MOVEMENT_LABEL[m.type] ?? m.type}
                   {m.reversed && <Badge>Estornada</Badge>}
-                  {m.source_type && <Badge>{SOURCE_LABEL[m.source_type] ?? m.source_type}</Badge>}
+                  {m.source_type === "production_order" && m.source_id ? (
+                    <Link href={`/admin/producao/${m.source_id}`} className="hover:underline">
+                      <Badge>Produção</Badge>
+                    </Link>
+                  ) : (
+                    m.source_type && <Badge>{SOURCE_LABEL[m.source_type] ?? m.source_type}</Badge>
+                  )}
                 </span>
               </Td>
               <Td className={`whitespace-nowrap text-right tabular-nums ${qty > 0 ? "text-success" : "text-danger"}`}>

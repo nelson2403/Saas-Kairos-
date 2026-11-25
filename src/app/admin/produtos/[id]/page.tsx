@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, BookOpenText } from "lucide-react";
 import { MovementTable } from "@/components/inventory/movement-table";
 import { StockSummary } from "@/components/inventory/stock-summary";
 import { PageHeader, SectionSkeleton } from "@/components/layout/page-header";
@@ -20,6 +20,7 @@ import {
   listProductImages,
   listUnits,
 } from "@/modules/inventory/service";
+import { getRecipeStatus } from "@/modules/production/service";
 import { ProductForm } from "../product-form";
 import { ProductPhotos } from "./product-photos";
 
@@ -37,24 +38,30 @@ async function ProductDetail({ params, searchParams }: PageProps<"/admin/produto
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const { role, companyId } = await requireMembership();
-  const [product, categories, units, balance, movements, images] = await Promise.all([
+  const [product, categories, units, balance, movements, images, recipe] = await Promise.all([
     getProduct(id),
     listCategories().then(categoryPaths),
     listUnits(),
     getItemBalance("product", id),
     listMovements({ itemType: "product", itemId: id }),
     listProductImages(id),
+    getRecipeStatus(id),
   ]);
   if (!product) notFound();
 
   return (
     <>
       <PageHeader title={product.name} description={product.sku ? `SKU ${product.sku}` : undefined}>
-        {canMoveStock(role) && product.status !== "archived" && (
-          <Link href={`/admin/movimentacoes/nova?item=product:${id}`} className={buttonVariants()}>
-            <ArrowLeftRight aria-hidden /> Movimentar estoque
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/producao/fichas/${id}`} className={buttonVariants({ variant: "outline" })}>
+            <BookOpenText aria-hidden /> {recipe.activeVersion ? `Ficha técnica v${recipe.activeVersion}` : "Ficha técnica"}
           </Link>
-        )}
+          {canMoveStock(role) && product.status !== "archived" && (
+            <Link href={`/admin/movimentacoes/nova?item=product:${id}`} className={buttonVariants()}>
+              <ArrowLeftRight aria-hidden /> Movimentar estoque
+            </Link>
+          )}
+        </div>
       </PageHeader>
       {sp.criado && (
         <p role="status" className="mb-4 rounded-md bg-success/10 p-3 text-sm text-success">
@@ -80,7 +87,8 @@ async function ProductDetail({ params, searchParams }: PageProps<"/admin/produto
             categories={categories}
             units={units}
             canEdit={canManageCatalog(role)}
-            unitLocked={movements.total > 0}
+            unitLocked={movements.total > 0 || recipe.versions > 0}
+            hasRecipe={!!recipe.activeVersion}
           />
         </Card>
         <StockSummary balance={balance} minStock={product.min_stock} />

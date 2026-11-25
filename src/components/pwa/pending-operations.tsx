@@ -19,6 +19,9 @@ function describe(op: PendingOperation) {
     const p = op.payload as Record<string, string>;
     return `${MOVEMENT_LABEL[p.type] ?? p.type} · ${p.itemName} · ${p.quantity} ${p.unitCode}`;
   }
+  if (op.operation === "production.complete") {
+    return `Conclusão de produção · ${(op.payload as { label?: string }).label ?? ""}`;
+  }
   return op.operation;
 }
 
