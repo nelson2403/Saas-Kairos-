@@ -3,7 +3,7 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 29/11/2026
+Última atualização: 30/11/2026
 
 ## Resumo
 
@@ -15,8 +15,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
 | 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
 | 5 — Vendas e financeiro | **Concluído** (aceito em 29/11/2026) | Publicado em produção |
-| 6 — Loja virtual | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 29/11; falta o roteiro de validação e a revisão da política de privacidade |
-| 7 — Personalização da loja | Não iniciado | |
+| 6 — Loja virtual | **Concluído** (aceito em 30/11/2026) | Publicado em produção. Pendente: revisão da política de privacidade pela proprietária |
+| 7 — Personalização da loja | **Testado** (aguardando validação) | Falta aplicar `20261130000100_storefront_editor.sql` e validar no Preview do branch `fase-7-personalizar` |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
 | 9 — WhatsApp / Evolution API | Não iniciado | Depende de servidor Evolution API |
 | 10 — PWA avançada e finalização | Não iniciado | |
@@ -33,6 +33,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
 | ~~Migration da Fase 5~~ | — | aplicada em 28/11 |
 | ~~Migration da Fase 6~~ | — | aplicada em 29/11 |
+| Aplicar `20261130000100_storefront_editor.sql` no SQL Editor | Fase 7 no ambiente publicado | dev |
 | Variável `CRON_SECRET` na Vercel (e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL` = endereço público) | Expiração diária de reservas; checkout; sitemap/SEO | dev |
 | Revisão da Política de Privacidade (`/privacidade`) pela proprietária | Publicação da loja | Kairós |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
@@ -224,6 +225,32 @@ Resultado: **177 testes passando** (`npm test`), lint, typecheck e build sem err
 7. Registrar o pagamento no painel e abrir o link do pedido: situação "Pagamento confirmado".
 8. Testar no celular (layout e carrinho).
 
+## Fase 7 — Personalizar minha loja
+
+Critério: *admin personaliza e publica sem código.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Rascunho × publicado: a loja pública lê só a versão publicada | Testado | `supabase/migrations/20261130000100_storefront_editor.sql` (`storefront`, `store_theme`) | rascunho não vaza; publicado só muda ao publicar | — |
+| Publicar gera versão numerada e imutável; restaurar copia a versão para o rascunho (publicar continua explícito) | Testado | `fn_publish_storefront`, `fn_restore_storefront_version`, `version-list.tsx` | 2 testes | — |
+| Aparência: 6 cores (com aviso de contraste WCAG), fonte dos títulos (3 opções), cantos, logo, barra de aviso | Testado | `src/modules/storefront/schema.ts`, `storefront-chrome.tsx` | cores só #RRGGBB (sem injeção de CSS), contraste | — |
+| Página inicial em seções reordenáveis/ocultáveis: destaque principal (imagem, título, botão), produtos em destaque (quantidade, categoria), categorias, banner com agendamento, texto | Testado | `home-sections.tsx`, `scheduled.tsx` | todas as seções validadas; agenda em horário de Brasília | — |
+| Rodapé (sobre, Instagram, WhatsApp) e SEO da página inicial | Implementado | editor, `(store)/page.tsx` (`generateMetadata`) | links só internos ou https | — |
+| Imagens da loja (logo, destaque, banners) reduzidas no aparelho e enviadas ao bucket `store-assets` (só proprietário/admin, pasta da empresa) | Testado | `src/lib/images/prepare.ts`, editor | política do bucket | limpeza de imagens não usadas (mantidas por causa das versões) |
+| Prévia ao vivo do rascunho dentro do editor (somente equipe logada; única rota que aceita iframe, e só do próprio site) | Implementado | `src/app/previa/page.tsx`, `next.config.ts`, `src/proxy.ts` | cabeçalhos conferidos por HTTP | validação visual |
+| Documento inválido nunca derruba a loja: cada bloco inválido volta ao padrão | Testado | `readStorefront` | 1 teste | — |
+
+Resultado: **188 testes passando** (`npm test`), lint, typecheck e build sem erros.
+
+### Como validar a Fase 7
+
+1. No Supabase → SQL Editor, executar `20261130000100_storefront_editor.sql`.
+2. No Preview do branch `fase-7-personalizar`: menu **Personalizar loja**.
+3. Aparência: trocar a cor de fundo e a fonte; **Salvar rascunho** e ver a prévia. Abrir a loja em outra aba: ela continua igual (rascunho não vaza).
+4. Página inicial: adicionar um Banner com imagem, mover para o topo, ocultar "Categorias"; salvar e conferir a prévia.
+5. **Publicar** com uma nota: a loja passa a mostrar a nova aparência (pode levar até 1 min por causa do cache).
+6. Em Versões publicadas, restaurar a versão anterior no rascunho e publicar de novo.
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -256,4 +283,7 @@ Resultado: **177 testes passando** (`npm test`), lint, typecheck e build sem err
 - **Pagamento na loja até a Fase 8**: instruções definidas pela empresa + registro manual no painel; nenhuma confirmação automática.
 - **Reserva com prazo** (padrão 48 h, configurável). Expiração verificada a cada carrinho/checkout/lista de pedidos e uma vez por dia (limite do Vercel Cron no plano Hobby).
 - **Cliente da loja** reaproveitado por CPF ou e-mail; a loja nunca sobrescreve dados existentes nem revoga consentimentos.
+- **Personalização em documento único (rascunho/publicado)** validado por esquema, em vez de várias tabelas; versões guardam o documento inteiro. Imagens antigas não são apagadas porque versões anteriores podem usá-las.
+- **Fontes de título pré-definidas** (Cormorant, Playfair, Lora): fontes arbitrárias exigiriam carregar código de terceiros na loja.
+- **Banners agendados são conferidos no navegador** (a página inicial fica em cache para ser rápida).
 - **Abrir ordem exige conexão** (numeração e ficha vigente vêm do servidor); **concluir** pode ser feito offline e é validado no servidor ao sincronizar.

@@ -50,7 +50,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { slug: "fornecedores", label: "Fornecedores", href: "/admin/fornecedores", icon: Truck, phase: 4, status: "available", summary: "Cadastro de fornecedores e histórico de compras." },
   { slug: "financeiro", label: "Financeiro", href: "/admin/financeiro", icon: Wallet, phase: 5, status: "available", summary: "Contas a pagar e receber, recebimentos, despesas e fluxo de caixa." },
   { slug: "relatorios", label: "Relatórios", href: "/admin/relatorios", icon: BarChart3, phase: 5, status: "available", summary: "Relatórios com exportação em PDF e Excel." },
-  { slug: "loja", label: "Loja virtual", href: "/admin/loja", icon: Store, phase: 6, status: "planned", summary: "Loja pública e o editor Personalizar Minha Loja (Fase 7)." },
+  { slug: "loja", label: "Personalizar loja", href: "/admin/loja", icon: Store, phase: 7, status: "available", summary: "Aparência, página inicial, banners e SEO da loja, com rascunho, publicação e versões." },
   { slug: "integracoes", label: "Integrações", href: "/admin/integracoes", icon: Plug, phase: 8, status: "planned", summary: "Asaas (Fase 8) e WhatsApp via Evolution API (Fase 9)." },
   { slug: "configuracoes", label: "Configurações", href: "/admin/configuracoes", icon: Settings, phase: 1, status: "available", summary: "Dados da empresa e preferências." },
   { slug: "status", label: "Status do app", href: "/admin/status", icon: Activity, phase: 1, status: "available", summary: "Conexão, sincronização, instalação e versão." },

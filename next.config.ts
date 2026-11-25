@@ -30,7 +30,18 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      { source: "/(.*)", headers: securityHeaders },
+      // Tudo, exceto a prévia da loja, proíbe ser aberto dentro de outro site.
+      { source: "/((?!previa).*)", headers: securityHeaders },
+      {
+        // Prévia do rascunho: só pode ser aberta dentro do próprio painel (iframe do editor).
+        source: "/previa",
+        headers: [
+          ...securityHeaders.filter((h) => h.key !== "X-Frame-Options"),
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
       {
         source: "/sw.js",
         headers: [

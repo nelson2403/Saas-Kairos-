@@ -7,31 +7,9 @@ import { useOffline } from "next/offline";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { ACCEPTED_IMAGE_TYPES as ACCEPTED, prepareImage } from "@/lib/images/prepare";
 import { MAX_PRODUCT_IMAGES, PRODUCT_IMAGES_BUCKET, productImageFolder, type ProductImage } from "@/modules/inventory/images";
 import { addProductImageAction, removeProductImageAction, setMainProductImageAction } from "../actions";
-
-const MAX_SIDE = 1600;
-const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
-
-/**
- * Reduz a foto no próprio aparelho (lado maior 1600 px, WebP ~85%) antes do envio:
- * fotos de celular têm 3–10 MB; assim o envio é rápido e a loja fica leve.
- */
-async function prepareImage(file: File): Promise<{ blob: Blob; ext: string; type: string }> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const toBlob = (type: string) => new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.85));
-  const webp = await toBlob("image/webp");
-  if (webp && webp.type === "image/webp") return { blob: webp, ext: "webp", type: "image/webp" };
-  const jpeg = await toBlob("image/jpeg"); // Safari antigo não gera WebP
-  if (!jpeg) throw new Error("Não foi possível processar a imagem.");
-  return { blob: jpeg, ext: "jpg", type: "image/jpeg" };
-}
 
 export function ProductPhotos({
   productId,
