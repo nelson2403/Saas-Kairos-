@@ -8,6 +8,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Badge, Card, CardTitle } from "@/components/ui/card";
 import { requireMembership } from "@/lib/auth/dal";
 import { canEditCustomers, canHandlePrivacy, getCustomer } from "@/modules/partners/service";
+import { formatMoney } from "@/modules/inventory/domain";
+import { ORDER_STATUS_LABEL, ORDER_STATUS_TONE, formatOrderNumber } from "@/modules/sales/domain";
+import { canSell, listOrders } from "@/modules/sales/service";
 import { CustomerForm } from "../customer-form";
 import { AnonymizeCustomer } from "./privacy-actions";
 
@@ -28,7 +31,7 @@ export default function CustomerPage(props: PageProps<"/admin/clientes/[id]">) {
 async function Detail({ params, searchParams }: PageProps<"/admin/clientes/[id]">) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
-  const [{ role }, data] = await Promise.all([requireMembership(), getCustomer(id)]);
+  const [{ role }, data, orders] = await Promise.all([requireMembership(), getCustomer(id), listOrders({ customerId: id })]);
   if (!data) notFound();
   const { customer, consents, people } = data;
   const anonymized = !!customer.anonymized_at;
@@ -78,8 +81,34 @@ async function Detail({ params, searchParams }: PageProps<"/admin/clientes/[id]"
           </Card>
 
           <Card>
-            <CardTitle className="mb-2">Compras</CardTitle>
-            <p className="text-sm text-muted-foreground">O histórico de pedidos e indicadores do cliente aparecem aqui com o módulo de vendas (Fase 5).</p>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <CardTitle>Pedidos</CardTitle>
+              {canSell(role) && !anonymized && (
+                <Link href={`/admin/pedidos/novo?cliente=${customer.id}`} className="text-sm text-muted-foreground hover:text-foreground">
+                  Novo pedido
+                </Link>
+              )}
+            </div>
+            {orders.rows.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum pedido ainda.</p>
+            ) : (
+              <>
+                <p className="mb-2 text-sm">
+                  {orders.rows.filter((o) => o.status === "paid" || o.status === "delivered").length} compras ·{" "}
+                  {formatMoney(orders.rows.filter((o) => o.status === "paid" || o.status === "delivered").reduce((s, o) => s + Number(o.total), 0))}
+                </p>
+                <ul className="space-y-1 text-sm">
+                  {orders.rows.slice(0, 10).map((o) => (
+                    <li key={o.id} className="flex items-center justify-between gap-2">
+                      <Link href={`/admin/pedidos/${o.id}`} className="hover:underline">
+                        {formatOrderNumber(o.number)} · {formatMoney(o.total)}
+                      </Link>
+                      <Badge tone={ORDER_STATUS_TONE[o.status]}>{ORDER_STATUS_LABEL[o.status]}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </Card>
 
           {canHandlePrivacy(role) && (

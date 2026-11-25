@@ -11,6 +11,9 @@ import { requireMembership } from "@/lib/auth/dal";
 import { formatCost, formatMoney, formatQuantity } from "@/modules/inventory/domain";
 import { PURCHASE_STATUS_LABEL, PURCHASE_STATUS_TONE, RECEIVABLE, formatPurchaseNumber, lineTotal } from "@/modules/purchasing/domain";
 import { canManagePurchases, canReceive, getPurchaseOrder } from "@/modules/purchasing/service";
+import { listSourceTransactions } from "@/modules/finance/service";
+import { STATUS_LABEL } from "@/modules/finance/domain";
+import { PayableForm } from "./payable-form";
 import { ReceiveForm } from "./receive-form";
 import { ReverseReceipt, StatusAction } from "./order-actions";
 
@@ -34,6 +37,8 @@ async function Detail({ params, searchParams }: PageProps<"/admin/compras/[id]">
   if (!order) notFound();
 
   const manage = canManagePurchases(role);
+  const payables = manage ? await listSourceTransactions("purchase_order", order.id) : [];
+  const committed = payables.filter((p) => p.status !== "canceled").reduce((s, p) => s + Number(p.amount), 0);
   const editable = manage && ["draft", "ordered"].includes(order.status) && order.receipts.length === 0;
   const receivable = canReceive(role) && RECEIVABLE.has(order.status);
   const itemName = (i: (typeof order.items)[number]) => i.product?.name ?? i.raw_material?.name ?? "—";
@@ -135,7 +140,24 @@ async function Detail({ params, searchParams }: PageProps<"/admin/compras/[id]">
             )}
             {order.notes && <Row label="Observações">{order.notes}</Row>}
           </dl>
-          <p className="mt-4 text-xs text-muted-foreground">Contas a pagar deste pedido entram com o módulo financeiro (Fase 5).</p>
+          {manage && order.status !== "canceled" && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="mb-2 text-sm font-medium">Contas a pagar</p>
+              {payables.length > 0 && (
+                <ul className="mb-2 space-y-1 text-sm">
+                  {payables.map((p) => (
+                    <li key={p.id} className="flex justify-between gap-2">
+                      <Link href={`/admin/financeiro/${p.id}`} className="hover:underline">
+                        {dateOnly.format(new Date(`${p.due_date}T12:00:00`))} · {formatMoney(p.amount)}
+                      </Link>
+                      <span className="text-muted-foreground">{STATUS_LABEL[p.status]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <PayableForm orderId={order.id} remaining={Math.max(0, Math.round((Number(order.total) - committed) * 100) / 100)} />
+            </div>
+          )}
           {manage && (
             <div className="mt-4 flex flex-col items-start gap-2 border-t border-border pt-4">
               {order.status === "draft" && <StatusAction orderId={order.id} status="ordered" />}

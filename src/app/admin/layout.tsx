@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className="min-h-dvh md:flex">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="pt-safe sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
+        <header className="pt-safe sticky top-0 z-30 print:hidden border-b border-border bg-background/90 backdrop-blur">
           <div className="flex h-14 items-center gap-3 px-4 md:h-16 md:px-8">
             <Link href="/admin" className="md:hidden" aria-label="Kairós — início">
               <Logo className="[&>span]:text-lg" />
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
             </div>
           </div>
         </header>
-        <main className="flex-1 px-4 pb-[calc(6rem+var(--safe-bottom))] pt-6 md:px-8 md:pb-10">{children}</main>
+        <main className="flex-1 print:p-0 px-4 pb-[calc(6rem+var(--safe-bottom))] pt-6 md:px-8 md:pb-10">{children}</main>
       </div>
       <BottomNav />
     </div>

@@ -185,6 +185,7 @@ Convenções obrigatórias:
 - `payments` — cobranças (Asaas ou manual): valor, método, status, `external_id` único.
 - `financial_transactions` — contas a pagar/receber com competência, vencimento, data de liquidação, valor previsto × liquidado. Fluxo de caixa = transações liquidadas; faturamento = vendas. São visões diferentes por construção.
 - `expenses` — despesas categorizadas (geram `financial_transactions`).
+- Implementado na Fase 5: `orders` (status `pending/paid/delivered/canceled/refunded`, reserva em `stock_balances.reserved_quantity`) → `order_items` (`unit_cost`, `movement_id`), `order_status_history`, `payments` (provider `manual`/`asaas`, `external_id` único), `financial_categories` (do sistema + personalizadas), `financial_transactions` (despesas manuais incluídas; não houve tabela `expenses` separada), visão `sales_items`. A tabela `sales` foi dispensada: venda efetivada = pedido pago.
 
 **Loja** (Fases 6–7)
 - `storefront_settings` (domínio, SEO, contatos), `storefront_theme` (tokens de cor/tipografia/aparência em `jsonb`), `storefront_sections` (tipo, ordem, visível, config), `storefront_banners` (agenda `starts_at`/`ends_at`), `storefront_versions` (snapshot `jsonb` do rascunho publicado; restauração = copiar snapshot para rascunho), `product_reviews` (aprovada, destacada, `verified_purchase`).

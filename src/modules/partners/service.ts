@@ -126,7 +126,6 @@ export async function anonymizeCustomer(input: Record<string, unknown>): Promise
 
 /**
  * Exportação dos dados do titular (LGPD, art. 18). Registra o acesso na auditoria.
- * Pedidos e compras do cliente entram na exportação quando existirem (Fase 5).
  */
 export async function exportCustomer(id: string) {
   const { companyId, user } = await requireRole(PRIVACY_ROLES);
@@ -136,6 +135,11 @@ export async function exportCustomer(id: string) {
   // Sem registro na auditoria, não exporta.
   const { error } = await supabase.rpc("fn_log_customer_export", { p_customer_id: id });
   if (error) throw new Error("Não foi possível registrar a exportação.");
+  const { data: orders } = await supabase
+    .from("orders")
+    .select("number, status, total, created_at, paid_at, items:order_items(quantity, unit_price, total, product:products(name))")
+    .eq("customer_id", id)
+    .order("created_at");
   const { customer, consents } = data;
   return {
     gerado_em: new Date().toISOString(),
@@ -143,6 +147,7 @@ export async function exportCustomer(id: string) {
     solicitado_por: user.email,
     cliente: customer,
     consentimentos: consents.map(({ channel, granted, source, created_at }) => ({ canal: channel, concedido: granted, origem: source, em: created_at })),
+    pedidos: orders ?? [],
   };
 }
 

@@ -43,7 +43,7 @@ function BottomNavWithPath() {
 /** Menu lateral (tablet/desktop). */
 function SidebarView({ pathname }: { pathname: string }) {
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
+    <aside className="sticky top-0 hidden print:!hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface md:flex">
       <div className="flex h-20 items-center justify-center border-b border-border">
         <Link href="/admin" aria-label="Kairós — início">
           <Logo />
@@ -85,7 +85,7 @@ function BottomNavView({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur md:hidden"
+      className="pb-safe fixed inset-x-0 bottom-0 z-40 print:hidden border-t border-border bg-surface/95 backdrop-blur md:hidden"
     >
       <ul className="grid grid-cols-5">
         {items.map((item) => {

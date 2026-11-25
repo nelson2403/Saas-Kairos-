@@ -3,7 +3,7 @@
 Estados: **Não iniciado · Em desenvolvimento · Implementado · Testado · Concluído · Bloqueado**
 Uma fase só é **Concluída** quando o critério de aceite é atendido no ambiente de teste.
 
-Última atualização: 27/11/2026
+Última atualização: 28/11/2026
 
 ## Resumo
 
@@ -13,8 +13,8 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 1 — Fundação + PWA | **Concluído** (aceito em 24/11/2026) | Publicado na Vercel, login e banco validados pelo usuário. Pendente: teste de instalação em Android/iPhone reais |
 | 2 — Produtos e estoque | **Concluído** (aceito em 25/11/2026) | Publicado em produção. Pendentes menores: leitor de código de barras pela câmera, teste offline no aparelho |
 | 3 — Produção | **Concluído** (aceito em 27/11/2026) | Publicado em produção |
-| 4 — Clientes, fornecedores e compras | **Testado** (publicado, aguardando validação) | Migration aplicada e publicada em produção em 27/11; falta o roteiro de validação |
-| 5 — Vendas e financeiro | Não iniciado | |
+| 4 — Clientes, fornecedores e compras | **Concluído** (aceito em 28/11/2026) | Publicado em produção |
+| 5 — Vendas e financeiro | **Testado** (aguardando validação) | Falta aplicar `20261128000100_sales_finance.sql` e validar no Preview do branch `fase-5-vendas` |
 | 6 — Loja virtual | Não iniciado | |
 | 7 — Personalização da loja | Não iniciado | |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
@@ -31,6 +31,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | ~~Migrations da Fase 2~~ | — | aplicadas em 25/11 |
 | ~~Migration da Fase 3~~ | — | aplicada em 26/11 |
 | ~~Migration da Fase 4~~ | — | aplicada em 27/11 |
+| Aplicar `20261128000100_sales_finance.sql` no SQL Editor | Fase 5 no ambiente publicado | dev |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — tela de Equipe |
 
@@ -157,6 +158,39 @@ Resultado: **134 testes passando** (`npm test`), lint, typecheck e build sem err
 7. Estornar um recebimento e conferir o saldo.
 8. (Opcional, irreversível) Anonimizar um cliente de teste.
 
+## Fase 5 — Pedidos, vendas, financeiro e relatórios
+
+Critério: *pedidos e financeiro consistentes.*
+
+| Funcionalidade | Status | Arquivos | Testes | Pendências |
+|---|---|---|---|---|
+| Pedido (PED-0001): itens, desconto, frete, cliente opcional, vencimento; leitor de código de barras USB na busca de produtos | Testado | `supabase/migrations/20261128000100_sales_finance.sql`, `src/app/admin/pedidos/*` | totais, desconto > total, produto inativo, papel | — |
+| Reserva de estoque ao criar o pedido (disponível = saldo − reservado); saídas manuais não consomem reserva | Testado | `private.reserve_product`, `private.apply_stock_movement` | 3 testes + **30 pedidos simultâneos para 10 unidades** | expiração automática de reservas (loja, Fase 6) |
+| Pagamento registrado no servidor efetiva a venda: baixa consumindo a reserva, custo médio no item, pagamento e conta a receber liquidada — uma transação | Testado | `fn_register_order_payment`, `private.confirm_order_payment` | 2 testes + pagamentos simultâneos (baixa uma vez) | Asaas (Fase 8) |
+| Venda no balcão (pagamento junto com o pedido) | Testado | `fn_create_order` com pagamento | idempotência | — |
+| Cancelar (libera reserva, cancela recebível), entregar, estornar venda paga (gerente+: devolve estoque, estorna pagamento, saída no caixa); histórico de situação | Testado | `fn_cancel_order`, `fn_mark_order_delivered`, `fn_refund_order` | 3 testes | — |
+| Vendas: faturamento, nº de vendas, ticket médio e lucro bruto por período (data do pagamento) | Implementado | `src/app/admin/vendas/page.tsx`, visão `sales_items` | visão (desconto rateado, estornos fora) | validação visual |
+| Financeiro: a receber, a pagar, liquidados; despesas/receitas manuais; liquidar, desfazer, cancelar; categorias; vencidos | Testado | `fn_save_transaction`, `fn_settle_transaction`, `fn_set_transaction_status`, `src/app/admin/financeiro/*` | 4 testes (papéis, categoria x tipo, data futura, recebível só pelo pedido) | conciliação bancária (fora do escopo) |
+| Contas a pagar a partir do pedido de compra (parcelas até o total) | Testado | `fn_create_purchase_payable`, página da compra | limite do total | — |
+| Fluxo de caixa diário (liquidados) com acumulado | Testado | `buildCashFlow`, `/admin/financeiro/fluxo` | domínio | saldo inicial de caixa (a definir) |
+| Relatórios: vendas por pedido, vendas por produto com margem, fluxo de caixa, despesas por categoria, contas em aberto, valor do estoque; exportação **Excel (.xlsx)** e impressão/**PDF** | Implementado | `src/modules/reports/service.ts`, `/admin/relatorios`, `/admin/relatorios/exportar` | build; geração de .xlsx verificada | validação visual |
+| Cliente: histórico de pedidos na ficha e na exportação LGPD; Dashboard com faturamento, vendas e ticket do mês, pedidos em andamento e contas vencidas | Implementado | páginas de cliente e Dashboard | build | — |
+
+Resultado: **157 testes passando** (`npm test`), lint, typecheck e build sem erros. `npm audit` sem vulnerabilidades (`uuid` atualizado via `overrides` por causa do exceljs).
+
+### Como validar a Fase 5
+
+1. No Supabase → SQL Editor, executar `20261128000100_sales_finance.sql`.
+2. Abrir o Preview do branch `fase-5-vendas` na Vercel.
+3. Ter um produto com saldo (ex.: 5). Pedidos → Novo pedido de 3 unidades, sem pagamento: conferir em Estoque "Reservado 3" e no Financeiro → A receber o valor.
+4. Tentar uma saída manual de 3 unidades em Movimentações: deve recusar (estoque reservado).
+5. No pedido, registrar o pagamento: saldo cai para 2, reserva zera, conta aparece em Liquidados e a venda aparece em Vendas e no Dashboard.
+6. Vendas → Nova venda (balcão) com pagamento em Pix.
+7. Estornar uma venda (gerente+) e conferir estoque e Fluxo de caixa (saída do estorno).
+8. Financeiro → Novo lançamento (ex.: aluguel), pagar, conferir o fluxo de caixa.
+9. Em um pedido de compra, lançar a conta a pagar.
+10. Relatórios: abrir "Vendas por produto", exportar Excel e imprimir/salvar PDF.
+
 ## Decisões registradas
 
 - **Service Worker próprio** em vez de plugin (ver ARCHITECTURE §3).
@@ -178,4 +212,10 @@ Resultado: **134 testes passando** (`npm test`), lint, typecheck e build sem err
 - **Auditoria mascara dados pessoais** de clientes e fornecedores (registra só que o campo mudou).
 - **Pedido de compra só é editado antes do primeiro recebimento**; depois, corrige-se estornando o recebimento ou encerrando o saldo.
 - **Recebimento usa o preço informado na chegada** como custo de entrada (pode diferir do pedido). Frete/rateio e contas a pagar ficam para o financeiro (Fase 5).
+- **Venda = pedido pago.** Faturamento usa a data do pagamento; fluxo de caixa usa a data de liquidação dos lançamentos (visões diferentes por construção).
+- **Pedido reserva, pagamento baixa.** O recebível do pedido só é liquidado pelo próprio pedido (porque baixa estoque). Pagamento parcial não existe nesta versão: um pagamento por pedido, no valor total.
+- **Estoque reservado** não pode sair por movimentação manual; ajuste (contagem física) continua livre.
+- **Financeiro visível só para proprietário, administrador e gerente** (operador vende, mas não vê contas a pagar/receber).
+- **Vendas e pedidos exigem conexão** (não confirmar venda nem pagamento offline).
+- **PDF via impressão do navegador** (Salvar como PDF); Excel gerado no servidor (.xlsx).
 - **Abrir ordem exige conexão** (numeração e ficha vigente vêm do servidor); **concluir** pode ser feito offline e é validado no servidor ao sincronizar.
