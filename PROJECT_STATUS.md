@@ -17,7 +17,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | 5 — Vendas e financeiro | **Concluído** (aceito em 29/11/2026) | Publicado em produção |
 | 6 — Loja virtual | **Concluído** (aceito em 30/11/2026) | Publicado em produção. Pendente: revisão da política de privacidade pela proprietária |
 | 7 — Personalização da loja | **Concluído** (aceito pelo usuário) | Publicado em produção |
-| Equipe (acessos) | **Testado** (aguardando validação) | Falta aplicar `20261201000100_team.sql` e validar no Preview do branch `fase-7b-equipe` |
+| Equipe (acessos) | **Testado** (publicado em produção; aguardando validação) | Migration aplicada em 01/12 |
 | 8 — Asaas | Não iniciado | Depende de conta Asaas (sandbox) |
 | 9 — WhatsApp / Evolution API | Não iniciado | Depende de servidor Evolution API |
 | 10 — PWA avançada e finalização | Não iniciado | |
@@ -38,7 +38,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Variável `CRON_SECRET` na Vercel (e conferir `SUPABASE_SECRET_KEY` e `NEXT_PUBLIC_SITE_URL` = endereço público) | Expiração diária de reservas; checkout; sitemap/SEO | dev |
 | Revisão da Política de Privacidade (`/privacidade`) pela proprietária | Publicação da loja | Kairós |
 | Aparelho Android e iPhone para teste de instalação | Pendência da Fase 1 | Kairós |
-| Aplicar `20261201000100_team.sql` no SQL Editor | Tela de Equipe | dev |
+| ~~Migration da Equipe~~ | — | aplicada em 01/12 |
 | Transferir a propriedade do sistema para o responsável da Kairós (hoje o proprietário é a conta do desenvolvedor) | Entrega | Kairós / dev — Equipe → Tornar proprietário |
 
 ## Fase 1 — Fundação + PWA
