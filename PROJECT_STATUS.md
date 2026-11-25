@@ -28,7 +28,7 @@ Uma fase só é **Concluída** quando o critério de aceite é atendido no ambie
 | Logo oficial (SVG ou PNG ≥ 1024 px, fundo transparente) | Ícones e assinatura definitivos (hoje provisórios) | Kairós |
 | Projeto Supabase (URL, publishable key, secret key) + migrations aplicadas | Login real, critério da Fase 1 | Kairós / dev |
 | Projeto Vercel ligado ao GitHub + variáveis de ambiente | Ambiente de teste publicado | Kairós / dev |
-| Push do código para `github.com/nelson2403/Saas-Kairos-` | Deploy | aguardando autorização |
+| ~~Push do código para `github.com/nelson2403/Saas-Kairos-`~~ | — | feito (branch `fase-1-fundacao`) |
 | Aparelho Android e iPhone para teste de instalação | Critério da Fase 1 | Kairós |
 
 ## Fase 1 — Fundação + PWA
@@ -60,7 +60,7 @@ Critério: *aplicação publicada em ambiente de teste, com login funcional, ban
 ### Como concluir a Fase 1
 
 1. Criar o projeto Supabase e aplicar a migration (README → "Configurando o Supabase").
-2. Autorizar o push para o GitHub e importar na Vercel com as variáveis.
+2. Importar o repositório na Vercel e cadastrar as variáveis (código já está no GitHub).
 3. Validar no preview: login, criação da empresa, edição em Configurações, Status do app mostrando "Banco de dados: Conectado".
 4. Instalar no Android (Chrome) e no iPhone (Safari) e abrir em modo aplicativo.
 
